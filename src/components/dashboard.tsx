@@ -15,6 +15,11 @@ function integer(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+function shortMoney(value: number) {
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
+  return `$${Math.round(value)}`;
+}
+
 function pretty(ymd: string) {
   const [year, month, day] = ymd.split("-").map(Number);
   return new Intl.DateTimeFormat("en-US", {
@@ -254,22 +259,44 @@ export function Dashboard({
             <h2 className="text-lg font-semibold">Daily spend</h2>
             {data.days.length ? (
               <>
-                <div className="mt-4 flex h-40 items-end gap-1 rounded-md bg-pine-soft px-3 pt-3">
+                <div className="mt-4 flex h-52 items-end gap-1 rounded-md bg-pine-soft px-3 pb-3 pt-8">
                   {data.days.map((day) => (
-                    <div
-                      key={day.day}
-                      className="min-w-0 flex-1 rounded-t-sm bg-pine"
-                      style={{
-                        height: `${Math.max(4, (day.spend / maxSpend) * 100)}%`,
-                        opacity: 0.45 + 0.55 * (day.spend / maxSpend),
-                      }}
-                      title={`${pretty(day.day)} ${money(day.spend, currency)}`}
-                    />
+                    <div key={day.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+                      {data.days.length <= 16 ? (
+                        <span className="text-[10px] leading-none text-pine">{shortMoney(day.spend)}</span>
+                      ) : null}
+                      <div
+                        className="w-full rounded-t-sm bg-pine"
+                        style={{
+                          height: `${Math.max(4, (day.spend / maxSpend) * (data.days.length <= 16 ? 78 : 100))}%`,
+                          opacity: 0.45 + 0.55 * (day.spend / maxSpend),
+                        }}
+                        title={`${pretty(day.day)} ${money(day.spend, currency)}`}
+                      />
+                    </div>
                   ))}
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-muted">
                   <span>{pretty(data.days[0].day)}</span>
                   <span>{pretty(data.days[data.days.length - 1].day)}</span>
+                </div>
+                <div className="mt-4 max-h-80 overflow-y-auto rounded-md border border-line bg-card">
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 border-b border-line bg-card text-xs uppercase tracking-[0.14em] text-muted">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Day</th>
+                        <th className="px-4 py-3 text-right font-medium">Spend</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...data.days].reverse().map((day) => (
+                        <tr key={day.day} className="border-b border-line last:border-0">
+                          <td className="px-4 py-2">{pretty(day.day)}</td>
+                          <td className="px-4 py-2 text-right font-mono text-pine">{money(day.spend, currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </>
             ) : (
