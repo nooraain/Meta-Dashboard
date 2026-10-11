@@ -186,6 +186,7 @@ export function Dashboard({
       {data.status === "ready" && data.range && current && currentFacts ? (
         <main className="mt-8 flex flex-col gap-10">
           <RangeFilters range={data.range} />
+          {data.notice ? <p className="text-sm text-down">{data.notice}</p> : null}
           {!data.hasTotals ? (
             <p className="text-sm text-muted">No Meta days are stored for this range yet.</p>
           ) : null}
@@ -196,14 +197,14 @@ export function Dashboard({
               {data.range.label} · {pretty(current.since)} – {pretty(current.until)}
               {previous ? ` · compared with ${pretty(previous.since)} – ${pretty(previous.until)}` : ""}
             </p>
-            {!data.range.fromSnapshot && data.range.storedDays < data.range.spanDays ? (
+            {data.range.totalsFrom === "stored" && data.range.storedDays < data.range.spanDays ? (
               <p className="mt-2 text-sm text-muted">
-                Totals include {data.range.storedDays} of {data.range.spanDays} days stored so far.
+                Totals include {data.range.storedDays} of {data.range.spanDays} stored days, so a longer range can show the same number.
               </p>
             ) : null}
             {current.demos == null ? (
               <p className="mt-4 rounded-md border border-warn-line bg-warn px-4 py-3 text-sm text-warn-ink">
-                {!data.range.fromSnapshot && data.range.storedDays < data.range.spanDays
+                {data.range.totalsFrom === "stored" && data.range.storedDays < data.range.spanDays
                   ? "Demos and CPA stay blank until every day in this range is stored. Spend shown is only the days already saved."
                   : "Demos and CPA stay blank until the Amplitude secret is saved. Spend is already from Meta."}
               </p>

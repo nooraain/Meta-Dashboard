@@ -2,6 +2,7 @@ import { facebookUniques } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
+import { insights, metrics } from "@/lib/meta";
 import { resolveRange, type ResolvedRange } from "@/lib/ranges";
 
 export type Period = {
@@ -35,11 +36,13 @@ export type DashboardRange = ResolvedRange & {
   spanDays: number;
   storedDays: number;
   fromSnapshot: boolean;
+  totalsFrom: "meta" | "stored";
 };
 
 export type DashboardModel = {
   status: "unconfigured" | "empty" | "ready";
   range: DashboardRange | null;
+  notice: string | null;
   hasTotals: boolean;
   current: Period | null;
   previous: Period | null;
@@ -50,6 +53,7 @@ export type DashboardModel = {
 const empty: DashboardModel = {
   status: "empty",
   range: null,
+  notice: null,
   hasTotals: false,
   current: null,
   previous: null,
@@ -82,6 +86,17 @@ type TotalsRow = {
   currency: string | null;
   refreshed_at: Date | null;
 };
+
+async function metaWindow(since: string, until: string) {
+  const [rows, uniques] = await Promise.all([
+    insights({ level: "account", since, until }),
+    facebookUniques(since, until).catch(() => null),
+  ]);
+  const counted = rows[0]
+    ? metrics(rows[0])
+    : { spend: 0, impressions: 0, clicks: 0, linkClicks: 0, leadForms: 0, reach: 0 };
+  return { ...counted, demos: uniques?.total ?? null };
+}
 
 async function windowDemos(since: string, until: string, snapshots: SnapshotRow[], allowFetch: boolean) {
   const match = snapshots.find((row) => row.since === since && row.until === until);
@@ -155,63 +170,108 @@ export async function loadDashboard(input: {
   };
 
   const spanDays = inclusiveDays(range.since, range.until);
-  const currentSnapshot = periods.find((row) => row.since === range.since && row.until === range.until);
-  const currentTotals = currentSnapshot ? null : await totals(range.since, range.until);
-  const storedDays = currentSnapshot ? spanDays : (currentTotals?.days ?? 0);
-  const hasTotals = Boolean(currentSnapshot) || storedDays > 0;
-  const currency = currentSnapshot?.currency ?? currentTotals?.currency ?? latest?.currency ?? "USD";
-  const refreshedAt =
-    currentSnapshot?.refreshed_at.toISOString() ??
-    currentTotals?.refreshed_at?.toISOString() ??
-    latest?.refreshed_at.toISOString() ??
-    new Date().toISOString();
-  const current: Period = currentSnapshot
-    ? snapshotPeriod(currentSnapshot)
-    : {
-        period: range.key,
-        since: range.since,
-        until: range.until,
-        spend: currentTotals?.spend ?? 0,
-        impressions: currentTotals?.impressions ?? 0,
-        clicks: currentTotals?.clicks ?? 0,
-        linkClicks: currentTotals?.link_clicks ?? 0,
-        reach: null,
-        demos: await windowDemos(range.since, range.until, periods, storedDays === spanDays),
-        leadForms: currentTotals?.lead_forms ?? 0,
-        currency,
-        refreshedAt,
-      };
+  const currency = latest?.currency ?? "USD";
+  const refreshedAt = new Date().toISOString();
+  let notice: string | null = null;
+  let totalsFrom: "meta" | "stored" = "meta";
+  let current: Period;
+  let previous: Period | null;
 
-  const previousSpan = inclusiveDays(range.previousSince, range.previousUntil);
-  const previousSnapshot = periods.find(
-    (row) => row.since === range.previousSince && row.until === range.previousUntil,
-  );
-  const previousTotals = previousSnapshot ? null : await totals(range.previousSince, range.previousUntil);
-  const previousStored = previousSnapshot ? previousSpan : (previousTotals?.days ?? 0);
-  const previous: Period | null =
-    previousSnapshot || previousStored > 0
-      ? previousSnapshot
-        ? snapshotPeriod(previousSnapshot)
-        : {
-            period: "previous",
-            since: range.previousSince,
-            until: range.previousUntil,
-            spend: previousTotals?.spend ?? 0,
-            impressions: previousTotals?.impressions ?? 0,
-            clicks: previousTotals?.clicks ?? 0,
-            linkClicks: previousTotals?.link_clicks ?? 0,
-            reach: null,
-            demos: await windowDemos(
-              range.previousSince,
-              range.previousUntil,
-              periods,
-              previousStored === previousSpan,
-            ),
-            leadForms: previousTotals?.lead_forms ?? 0,
-            currency: previousTotals?.currency ?? currency,
-            refreshedAt: previousTotals?.refreshed_at?.toISOString() ?? refreshedAt,
-          }
-      : null;
+  try {
+    const [live, previousLive] = await Promise.all([
+      metaWindow(range.since, range.until),
+      metaWindow(range.previousSince, range.previousUntil),
+    ]);
+    current = {
+      period: range.key,
+      since: range.since,
+      until: range.until,
+      spend: live.spend,
+      impressions: live.impressions,
+      clicks: live.clicks,
+      linkClicks: live.linkClicks,
+      reach: live.reach,
+      demos: live.demos,
+      leadForms: live.leadForms,
+      currency,
+      refreshedAt,
+    };
+    previous = {
+      period: "previous",
+      since: range.previousSince,
+      until: range.previousUntil,
+      spend: previousLive.spend,
+      impressions: previousLive.impressions,
+      clicks: previousLive.clicks,
+      linkClicks: previousLive.linkClicks,
+      reach: previousLive.reach,
+      demos: previousLive.demos,
+      leadForms: previousLive.leadForms,
+      currency,
+      refreshedAt,
+    };
+  } catch (error) {
+    totalsFrom = "stored";
+    notice = error instanceof Error ? error.message : "Meta request failed";
+    const currentSnapshot = periods.find((row) => row.since === range.since && row.until === range.until);
+    const currentTotals = currentSnapshot ? null : await totals(range.since, range.until);
+    const storedForWindow = currentSnapshot ? spanDays : (currentTotals?.days ?? 0);
+    current = currentSnapshot
+      ? snapshotPeriod(currentSnapshot)
+      : {
+          period: range.key,
+          since: range.since,
+          until: range.until,
+          spend: currentTotals?.spend ?? 0,
+          impressions: currentTotals?.impressions ?? 0,
+          clicks: currentTotals?.clicks ?? 0,
+          linkClicks: currentTotals?.link_clicks ?? 0,
+          reach: null,
+          demos: await windowDemos(range.since, range.until, periods, storedForWindow === spanDays),
+          leadForms: currentTotals?.lead_forms ?? 0,
+          currency: currentTotals?.currency ?? currency,
+          refreshedAt: currentTotals?.refreshed_at?.toISOString() ?? latest?.refreshed_at.toISOString() ?? refreshedAt,
+        };
+    const previousSpan = inclusiveDays(range.previousSince, range.previousUntil);
+    const previousSnapshot = periods.find(
+      (row) => row.since === range.previousSince && row.until === range.previousUntil,
+    );
+    const previousTotals = previousSnapshot ? null : await totals(range.previousSince, range.previousUntil);
+    const previousStored = previousSnapshot ? previousSpan : (previousTotals?.days ?? 0);
+    previous =
+      previousSnapshot || previousStored > 0
+        ? previousSnapshot
+          ? snapshotPeriod(previousSnapshot)
+          : {
+              period: "previous",
+              since: range.previousSince,
+              until: range.previousUntil,
+              spend: previousTotals?.spend ?? 0,
+              impressions: previousTotals?.impressions ?? 0,
+              clicks: previousTotals?.clicks ?? 0,
+              linkClicks: previousTotals?.link_clicks ?? 0,
+              reach: null,
+              demos: await windowDemos(
+                range.previousSince,
+                range.previousUntil,
+                periods,
+                previousStored === previousSpan,
+              ),
+              leadForms: previousTotals?.lead_forms ?? 0,
+              currency: previousTotals?.currency ?? currency,
+              refreshedAt: previousTotals?.refreshed_at?.toISOString() ?? refreshedAt,
+            }
+        : null;
+  }
+
+  const [storedRow] = await sql<{ days: number }[]>`
+    SELECT count(*)::int AS days
+    FROM account_days
+    WHERE account_id = ${ACCOUNT_ID}
+      AND day BETWEEN ${range.since} AND ${range.until}
+  `;
+  const storedDays = storedRow?.days ?? 0;
+  const hasTotals = totalsFrom === "meta" || current.spend > 0 || current.impressions > 0 || storedDays > 0;
 
   const days = await sql<DayPoint[]>`
     SELECT day::text AS day, spend::float8 AS spend
@@ -251,8 +311,10 @@ export async function loadDashboard(input: {
       ...range,
       spanDays,
       storedDays,
-      fromSnapshot: Boolean(currentSnapshot),
+      fromSnapshot: totalsFrom === "stored" && current.reach != null,
+      totalsFrom,
     },
+    notice,
     hasTotals,
     current,
     previous,

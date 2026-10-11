@@ -40,6 +40,7 @@ export async function facebookUniques(since: string, until: string): Promise<Uni
   url.searchParams.set("i", "1");
 
   const response = await fetch(url, {
+    cache: "no-store",
     headers: {
       Authorization: `Basic ${Buffer.from(`${key}:${secret}`).toString("base64")}`,
     },

@@ -54,30 +54,28 @@ export function RangeFilters({ range }: { range: DashboardRange }) {
           ))}
         </select>
         {PRESETS.map((preset) => (
-          <button
+          <a
             key={preset.key}
             className={`rounded-md border px-3 py-2 text-sm ${
               range.key === preset.key
                 ? "border-pine bg-pine text-card"
                 : "border-line bg-card text-ink hover:border-pine"
             }`}
-            type="button"
-            onClick={() => open({ range: preset.key })}
+            href={`/?range=${preset.key}`}
           >
             {preset.label}
-          </button>
+          </a>
         ))}
-        <button
+        <a
           className={`rounded-md border px-3 py-2 text-sm ${
             range.key === "custom"
               ? "border-pine bg-pine text-card"
               : "border-line bg-card text-ink hover:border-pine"
           }`}
-          type="button"
-          onClick={() => open({ range: "custom", from: range.since, to: range.until })}
+          href={`/?range=custom&from=${range.since}&to=${range.until}`}
         >
           Custom
-        </button>
+        </a>
       </div>
       {range.key === "custom" ? (
         <form

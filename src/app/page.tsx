@@ -3,6 +3,7 @@ import { loadDashboard } from "@/lib/dashboard";
 import { requireUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function Home({
   searchParams,

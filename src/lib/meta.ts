@@ -68,7 +68,7 @@ async function graph(path: string, params: Record<string, string>) {
   const rows: Insight[] = [];
   let next: string | null = url.toString();
   while (next) {
-    const response = await fetch(next);
+    const response = await fetch(next, { cache: "no-store" });
     const body = (await response.json()) as {
       data?: Insight[];
       paging?: { next?: string };
