@@ -5,6 +5,23 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --color-paper: #f3f0e8;
+  --color-ink: #1c1915;
+  --color-muted: #6d675f;
+  --color-line: #e3dcd1;
+  --color-card: #fffcf8;
+  --color-pine: #146c54;
+  --color-pine-soft: #e5f3ee;
+  --color-sea: #1d4e89;
+  --color-clay: #8a5a12;
+  --color-up: #0c7a55;
+  --color-down: #b42318;
+  --color-warn: #fbf6ea;
+  --color-warn-line: #ead9a8;
+  --color-warn-ink: #6a5420;
+}
+
 body {
   font-family: var(--font-sans), sans-serif;
 }

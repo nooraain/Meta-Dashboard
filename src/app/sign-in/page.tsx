@@ -28,11 +28,11 @@ export default async function SignInPage({
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
-      <p className="text-xs uppercase tracking-[0.18em] text-[#6f6a62]">TaxGPT</p>
+      <p className="text-xs uppercase tracking-[0.18em] text-pine">TaxGPT</p>
       <h1 className="mt-2 text-4xl font-semibold tracking-tight">Ads</h1>
-      <p className="mt-4 text-[#6f6a62]">Internal marketing numbers. Use your TaxGPT email.</p>
+      <p className="mt-4 text-muted">Internal marketing numbers. Use your TaxGPT email.</p>
       {failed ? (
-        <p className="mt-4 text-sm text-[#9f2d2d]">That email or password is wrong.</p>
+        <p className="mt-4 text-sm text-down">That email or password is wrong.</p>
       ) : null}
       {ready ? (
         <form
@@ -55,7 +55,7 @@ export default async function SignInPage({
           <label className="flex flex-col gap-2 text-sm">
             Email
             <input
-              className="h-11 border border-[#ddd6c8] bg-white px-3"
+              className="h-11 rounded-md border border-line bg-card px-3"
               name="email"
               type="email"
               autoComplete="username"
@@ -65,19 +65,19 @@ export default async function SignInPage({
           <label className="flex flex-col gap-2 text-sm">
             Password
             <input
-              className="h-11 border border-[#ddd6c8] bg-white px-3"
+              className="h-11 rounded-md border border-line bg-card px-3"
               name="password"
               type="password"
               autoComplete="current-password"
               required
             />
           </label>
-          <button className="mt-2 h-11 bg-[#1b1915] px-5 text-sm text-[#f7f4ee]" type="submit">
+          <button className="mt-2 h-11 rounded-md bg-pine px-5 text-sm text-card" type="submit">
             Sign in
           </button>
         </form>
       ) : (
-        <p className="mt-8 text-sm text-[#6f6a62]">
+        <p className="mt-8 text-sm text-muted">
           Add DASHBOARD_EMAIL and DASHBOARD_PASSWORD before signing in.
         </p>
       )}
