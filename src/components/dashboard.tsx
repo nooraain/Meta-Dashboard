@@ -310,7 +310,12 @@ export function Dashboard({
             )}
           </section>
 
-          <CampaignBoard campaigns={data.campaigns} currency={currency} unmatchedDemos={data.unmatchedDemos} />
+          <CampaignBoard
+            campaigns={data.campaigns}
+            currency={currency}
+            since={current.since}
+            until={current.until}
+          />
           </>
           ) : null}
         </main>

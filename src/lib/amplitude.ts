@@ -24,26 +24,10 @@ type Segmentation = {
     series?: AmplitudePoint[][];
     xValues?: string[];
     seriesCollapsed?: AmplitudePoint[][];
-    seriesLabels?: unknown[];
   };
 };
 
-function collapsedValue(point: AmplitudePoint | undefined) {
-  if (point == null) return 0;
-  if (typeof point === "object") return num(point.value);
-  return num(point);
-}
-
-function groupLabel(value: unknown): string {
-  if (typeof value === "string" || typeof value === "number") return String(value);
-  if (Array.isArray(value)) {
-    const parts = value.map(groupLabel).filter(Boolean);
-    return parts[parts.length - 1] ?? "";
-  }
-  return "";
-}
-
-async function segment(since: string, until: string, groupBy?: string): Promise<Segmentation | null> {
+async function segment(since: string, until: string): Promise<Segmentation | null> {
   const key = credential("AMPLITUDE_API_KEY");
   const secret = credential("AMPLITUDE_SECRET", "AMPLITUDE_SECRET_KEY");
   if (!key || !secret) return null;
@@ -71,10 +55,6 @@ async function segment(since: string, until: string, groupBy?: string): Promise<
   url.searchParams.set("end", until.replace(/-/g, ""));
   url.searchParams.set("m", "uniques");
   url.searchParams.set("i", "1");
-  if (groupBy) {
-    url.searchParams.set("g", JSON.stringify([{ type: "user", value: groupBy }]));
-    url.searchParams.set("limit", "100");
-  }
 
   const response = await fetch(url, {
     cache: "no-store",
@@ -110,17 +90,4 @@ export async function facebookUniques(since: string, until: string): Promise<Uni
         ? num(collapsed)
         : null;
   return { byDate, total };
-}
-
-export async function facebookCampaignUniques(since: string, until: string) {
-  const body = await segment(since, until, "gp:initial_utm_campaign");
-  if (!body) return null;
-  const collapsed = body.data?.seriesCollapsed ?? [];
-  const labels = body.data?.seriesLabels ?? [];
-  return collapsed
-    .map((series, index) => ({
-      label: groupLabel(labels[index]).trim(),
-      uniques: collapsedValue(series?.[0]),
-    }))
-    .filter((row) => row.label && row.label !== "(none)" && row.uniques > 0);
 }

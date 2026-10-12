@@ -1,4 +1,4 @@
-import { facebookCampaignUniques, facebookUniques } from "@/lib/amplitude";
+import { facebookUniques } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
@@ -50,7 +50,6 @@ export type DashboardModel = {
   previous: Period | null;
   days: DayPoint[];
   campaigns: CampaignTotal[];
-  unmatchedDemos: number | null;
 };
 
 const empty: DashboardModel = {
@@ -62,7 +61,6 @@ const empty: DashboardModel = {
   previous: null,
   days: [],
   campaigns: [],
-  unmatchedDemos: null,
 };
 
 type SnapshotRow = {
@@ -124,40 +122,6 @@ async function windowDemos(since: string, until: string, snapshots: SnapshotRow[
   } catch {
     return null;
   }
-}
-
-function compactName(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
-}
-
-function attachDemos(campaigns: CampaignTotal[], groups: { label: string; uniques: number }[] | null) {
-  if (!groups) return null;
-  let unmatched = 0;
-  for (const group of groups) {
-    const ids: string[] = group.label.match(/\d{12,}/g) ?? [];
-    let match = campaigns.find(
-      (campaign) =>
-        campaign.campaignId === group.label ||
-        ids.includes(campaign.campaignId) ||
-        group.label.includes(campaign.campaignId),
-    );
-    if (!match) {
-      const key = compactName(group.label);
-      match = campaigns.find((campaign) => {
-        const name = compactName(campaign.campaignName);
-        return name.length > 8 && (key.includes(name) || name.includes(key));
-      });
-    }
-    if (!match) {
-      unmatched += group.uniques;
-      continue;
-    }
-    match.demos = (match.demos ?? 0) + group.uniques;
-  }
-  for (const campaign of campaigns) {
-    if (campaign.demos == null) campaign.demos = 0;
-  }
-  return unmatched;
 }
 
 function snapshotPeriod(row: SnapshotRow): Period {
@@ -337,11 +301,7 @@ export async function loadDashboard(input: {
       AND day BETWEEN ${range.since} AND ${range.until}
     ORDER BY day
   `;
-  const [liveCampaigns, groupedDemos] = await Promise.all([
-    campaignWindow(range.since, range.until).catch(() => null),
-    facebookCampaignUniques(range.since, range.until).catch(() => null),
-  ]);
-  let unmatchedDemos: number | null = null;
+  const liveCampaigns = await campaignWindow(range.since, range.until).catch(() => null);
   let campaigns: CampaignTotal[];
   if (liveCampaigns) {
     campaigns = liveCampaigns
@@ -354,9 +314,8 @@ export async function loadDashboard(input: {
         clicks: row.clicks,
         linkClicks: row.linkClicks,
         leadForms: row.leadForms,
-        demos: null,
+        demos: row.demos,
       }));
-    unmatchedDemos = attachDemos(campaigns, groupedDemos);
   } else {
     const stored = await sql<
       {
@@ -409,6 +368,5 @@ export async function loadDashboard(input: {
     previous,
     days,
     campaigns,
-    unmatchedDemos,
   };
 }

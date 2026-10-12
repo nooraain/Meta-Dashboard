@@ -105,6 +105,10 @@ function leadFormResults(row: Insight) {
   return actionValue(row, (type) => type === "onsite_conversion.lead_grouped");
 }
 
+function demoResults(row: Insight) {
+  return actionValue(row, (type) => type.toLowerCase().replace(/[^a-z0-9]/g, "").includes("demobooked"));
+}
+
 function leadObjective(objective: string | undefined) {
   return objective === "OUTCOME_LEADS" || objective === "LEAD_GENERATION";
 }
@@ -132,6 +136,7 @@ export async function campaignWindow(since: string, until: string) {
       campaignId: row.campaign_id ?? "",
       campaignName: row.campaign_name ?? "",
       ...metrics(row),
+      demos: demoResults(row),
     }))
     .filter((row) => row.campaignId);
 }

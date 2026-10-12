@@ -99,6 +99,11 @@ function cpa(campaign: CampaignTotal) {
   return ratio(campaign.spend, campaign.demos);
 }
 
+function cpm(campaign: CampaignTotal) {
+  if (!campaign.impressions) return null;
+  return (campaign.spend / campaign.impressions) * 1000;
+}
+
 function ranked(campaigns: CampaignTotal[]) {
   const active = campaigns.filter((campaign) => campaign.spend > 0 || (campaign.demos ?? 0) > 0);
   const byDemos = [...active].sort((a, b) => (b.demos ?? -1) - (a.demos ?? -1) || b.spend - a.spend);
@@ -157,8 +162,10 @@ export function PerformanceComparison({
   const later = windowLabel(current.since, current.until);
   const basis =
     range.comparison === "month"
-      ? "Same dates in the previous month."
-      : "The previous window of the same length.";
+      ? `Follows the ${range.label} filter. The earlier column is the previous calendar month.`
+      : range.key === "week"
+        ? "Follows the selected week. The earlier column is the previous week."
+        : `Follows the ${range.label} filter. The earlier column is the previous window of the same length.`;
   const show = (value: number | null, format: (value: number) => string) => (value == null ? "—" : format(value));
 
   return (
@@ -247,24 +254,25 @@ export function PerformanceComparison({
 export function CampaignBoard({
   campaigns,
   currency,
-  unmatchedDemos,
+  since,
+  until,
 }: {
   campaigns: CampaignTotal[];
   currency: string;
-  unmatchedDemos: number | null;
+  since: string;
+  until: string;
 }) {
   const { listed, topDemos, topSpend, bestCpa } = ranked(campaigns);
-  const waiting = campaigns.every((campaign) => campaign.demos == null);
   return (
     <section>
       <h2 className="text-lg font-semibold">Top campaigns</h2>
       <p className="mt-1 max-w-3xl text-sm text-muted">
-        Demos are unique Demo Booked users whose initial campaign matches the Meta campaign. CPA is that campaign’s spend divided by those uniques.
+        Ranked for {windowLabel(since, until)}, the dates selected above. Demos are Meta’s demo_booked results on that campaign. CPA divides campaign spend by those results. CPM is spend per 1,000 impressions.
       </p>
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
         <Highlight
           label="Most demos"
-          name={topDemos?.campaignName || (waiting ? "Waiting on Amplitude" : "—")}
+          name={topDemos?.campaignName || "—"}
           detail={topDemos?.demos == null ? "—" : `${integer(topDemos.demos)} demos`}
         />
         <Highlight
@@ -274,15 +282,10 @@ export function CampaignBoard({
         />
         <Highlight
           label="Best CPA"
-          name={bestCpa?.campaignName || (waiting ? "Waiting on Amplitude" : "—")}
+          name={bestCpa?.campaignName || "—"}
           detail={bestCpa && cpa(bestCpa) != null ? money(cpa(bestCpa) as number, currency) : "—"}
         />
       </div>
-      {unmatchedDemos ? (
-        <p className="mt-3 text-sm text-muted">
-          {integer(unmatchedDemos)} Facebook demos did not match a Meta campaign name or id, so they are left out of campaign CPA.
-        </p>
-      ) : null}
       <div className="mt-4 overflow-x-auto rounded-md border border-line bg-card">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
@@ -291,11 +294,13 @@ export function CampaignBoard({
               <th className="px-4 py-3 text-right font-medium">Spend</th>
               <th className="px-4 py-3 text-right font-medium">Demos</th>
               <th className="px-4 py-3 text-right font-medium">CPA</th>
+              <th className="px-4 py-3 text-right font-medium">CPM</th>
             </tr>
           </thead>
           <tbody>
             {listed.map((campaign) => {
               const cost = cpa(campaign);
+              const mille = cpm(campaign);
               const marks = [
                 campaign.campaignId === topDemos?.campaignId ? "Most demos" : "",
                 campaign.campaignId === topSpend?.campaignId ? "Most spend" : "",
@@ -310,12 +315,13 @@ export function CampaignBoard({
                   <td className="px-4 py-3 text-right font-mono text-pine">{money(campaign.spend, currency)}</td>
                   <td className="px-4 py-3 text-right font-mono">{campaign.demos == null ? "—" : integer(campaign.demos)}</td>
                   <td className="px-4 py-3 text-right font-mono">{cost == null ? "—" : money(cost, currency)}</td>
+                  <td className="px-4 py-3 text-right font-mono">{mille == null ? "—" : money(mille, currency)}</td>
                 </tr>
               );
             })}
             {listed.length === 0 ? (
               <tr>
-                <td className="px-4 py-4 text-muted" colSpan={4}>
+                <td className="px-4 py-4 text-muted" colSpan={5}>
                   Campaign rows appear after Meta returns this window.
                 </td>
               </tr>

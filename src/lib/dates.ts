@@ -22,14 +22,6 @@ export function inclusiveDays(since: string, until: string) {
   return Math.round((end - start) / 86400000) + 1;
 }
 
-export function shiftMonths(ymd: string, months: number) {
-  const [year, month, day] = ymd.split("-").map(Number);
-  const target = new Date(Date.UTC(year, month - 1 + months, 1));
-  const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-  const clamped = Math.min(day, last);
-  return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}-${String(clamped).padStart(2, "0")}`;
-}
-
 export function startOfWeek(ymd: string) {
   const [year, month, day] = ymd.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
