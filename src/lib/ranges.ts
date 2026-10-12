@@ -81,6 +81,16 @@ function previousMonth(ym: string) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+function previousMonthSpan(since: string, until: string) {
+  const prevYm = previousMonth(monthKey(since));
+  const [year, month] = prevYm.split("-").map(Number);
+  const previousSince = `${prevYm}-${since.slice(8, 10)}`;
+  const endDay = Number(until.slice(8, 10));
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const previousUntil = `${prevYm}-${String(Math.min(endDay, lastDay)).padStart(2, "0")}`;
+  return { previousSince, previousUntil };
+}
+
 function preset(key: RangeKey, anchor: string) {
   const match = PRESETS.find((item) => item.key === key);
   if (!match) return null;
@@ -105,11 +115,9 @@ function withPrevious(
     previousSince = addDays(window.since, -7);
     previousUntil = addDays(window.since, -1);
   } else if (window.key === "month") {
-    const previous = monthWindow(previousMonth(monthKey(window.since)), anchor);
-    if (previous) {
-      previousSince = previous.since;
-      previousUntil = previous.until;
-    }
+    const previous = previousMonthSpan(window.since, window.until);
+    previousSince = previous.previousSince;
+    previousUntil = previous.previousUntil;
     comparison = "month";
   }
   const months = Array.from({ length: 8 }, (_, index) => {

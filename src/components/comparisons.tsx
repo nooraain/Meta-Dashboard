@@ -162,7 +162,7 @@ export function PerformanceComparison({
   const later = windowLabel(current.since, current.until);
   const basis =
     range.comparison === "month"
-      ? `Follows the ${range.label} filter. The earlier column is the previous calendar month.`
+      ? `Follows the ${range.label} filter. The earlier column is the same calendar days in the previous month.`
       : range.key === "week"
         ? "Follows the selected week. The earlier column is the previous week."
         : `Follows the ${range.label} filter. The earlier column is the previous window of the same length.`;
