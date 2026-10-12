@@ -6,20 +6,20 @@
 }
 
 @theme {
-  --color-paper: #f3f0e8;
-  --color-ink: #1c1915;
-  --color-muted: #6d675f;
-  --color-line: #e3dcd1;
-  --color-card: #fffcf8;
-  --color-pine: #146c54;
-  --color-pine-soft: #e5f3ee;
-  --color-sea: #1d4e89;
-  --color-clay: #8a5a12;
-  --color-up: #0c7a55;
-  --color-down: #b42318;
-  --color-warn: #fbf6ea;
-  --color-warn-line: #ead9a8;
-  --color-warn-ink: #6a5420;
+  --color-paper: #fff0f6;
+  --color-ink: #4a2036;
+  --color-muted: #a06b84;
+  --color-line: #f3c5d6;
+  --color-card: #fff8fb;
+  --color-pine: #e23b7a;
+  --color-pine-soft: #ffe0ec;
+  --color-sea: #a23d8a;
+  --color-clay: #c45b86;
+  --color-up: #2f9d78;
+  --color-down: #d1266a;
+  --color-warn: #fff3f8;
+  --color-warn-line: #f6c6d8;
+  --color-warn-ink: #8d3d62;
 }
 
 body {
