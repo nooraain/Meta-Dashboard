@@ -1,4 +1,5 @@
 import { signOut } from "@/auth";
+import { CampaignBoard, PerformanceComparison } from "@/components/comparisons";
 import { RangeFilters } from "@/components/range-filters";
 import type { DashboardModel, Period } from "@/lib/dashboard";
 import { TIME_ZONE } from "@/lib/constants";
@@ -258,6 +259,8 @@ export function Dashboard({
             Cost per lead divides spend from lead campaigns by Meta’s lead (form) results.
           </p>
 
+          <PerformanceComparison range={data.range} current={current} previous={previous} currency={currency} />
+
           <section>
             <h2 className="text-lg font-semibold">Daily spend</h2>
             {data.days.length ? (
@@ -307,43 +310,7 @@ export function Dashboard({
             )}
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold">Campaign spend</h2>
-            <p className="mt-1 text-sm text-muted">Spend only. Campaign names do not match demo sources, so there is no campaign CPA.</p>
-            <div className="mt-4 overflow-x-auto rounded-md border border-line bg-card">
-              <table className="w-full min-w-[640px] text-left text-sm">
-                <thead className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Campaign</th>
-                    <th className="px-4 py-3 text-right font-medium">Spend</th>
-                    <th className="px-4 py-3 text-right font-medium">Impressions</th>
-                    <th className="px-4 py-3 text-right font-medium">Clicks</th>
-                    <th className="px-4 py-3 text-right font-medium">Link clicks</th>
-                    <th className="px-4 py-3 text-right font-medium">Lead forms</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.campaigns.map((campaign) => (
-                    <tr key={campaign.campaignId} className="border-b border-line last:border-0">
-                      <td className="max-w-[280px] truncate px-4 py-3">{campaign.campaignName || campaign.campaignId}</td>
-                      <td className="px-4 py-3 text-right font-mono text-pine">{money(campaign.spend, currency)}</td>
-                      <td className="px-4 py-3 text-right font-mono">{integer(campaign.impressions)}</td>
-                      <td className="px-4 py-3 text-right font-mono">{integer(campaign.clicks)}</td>
-                      <td className="px-4 py-3 text-right font-mono">{integer(campaign.linkClicks)}</td>
-                      <td className="px-4 py-3 text-right font-mono">{integer(campaign.leadForms)}</td>
-                    </tr>
-                  ))}
-                  {data.campaigns.length === 0 ? (
-                    <tr>
-                      <td className="px-4 py-4 text-muted" colSpan={6}>
-                        Campaign rows appear after the first daily refresh.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <CampaignBoard campaigns={data.campaigns} currency={currency} unmatchedDemos={data.unmatchedDemos} />
           </>
           ) : null}
         </main>

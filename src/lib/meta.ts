@@ -125,6 +125,17 @@ export async function leadFormWindow(since: string, until: string) {
   };
 }
 
+export async function campaignWindow(since: string, until: string) {
+  const rows = await insights({ level: "campaign", since, until });
+  return rows
+    .map((row) => ({
+      campaignId: row.campaign_id ?? "",
+      campaignName: row.campaign_name ?? "",
+      ...metrics(row),
+    }))
+    .filter((row) => row.campaignId);
+}
+
 export async function insights(options: {
   level: "account" | "campaign";
   since: string;

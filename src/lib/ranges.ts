@@ -1,4 +1,4 @@
-import { addDays, inclusiveDays, startOfWeek } from "@/lib/dates";
+import { addDays, inclusiveDays, shiftMonths, startOfWeek } from "@/lib/dates";
 
 export type RangeKey = "7d" | "14d" | "1m" | "2m" | "3m" | "4m" | "month" | "week" | "custom";
 
@@ -11,6 +11,7 @@ export type ResolvedRange = {
   until: string;
   previousSince: string;
   previousUntil: string;
+  comparison: "month" | "previous";
   month: string;
   week: string;
   months: RangeOption[];
@@ -74,12 +75,6 @@ function weekWindow(value: string, anchor: string) {
   return { since, until: end > anchor ? anchor : end };
 }
 
-function previousMonth(ym: string) {
-  const [year, month] = ym.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 2, 1));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
 function preset(key: RangeKey, anchor: string) {
   const match = PRESETS.find((item) => item.key === key);
   if (!match) return null;
@@ -99,16 +94,15 @@ function withPrevious(
 ): ResolvedRange {
   let previousSince = addDays(window.since, -inclusiveDays(window.since, window.until));
   let previousUntil = addDays(window.since, -1);
-  if (window.key === "month") {
-    const previous = monthWindow(previousMonth(monthKey(window.since)), anchor);
-    if (previous) {
-      previousSince = previous.since;
-      previousUntil = previous.until;
-    }
-  }
+  let comparison: "month" | "previous" = "previous";
+  const sameMonth = window.since.slice(0, 7) === window.until.slice(0, 7);
   if (window.key === "week") {
     previousSince = addDays(window.since, -7);
     previousUntil = addDays(window.since, -1);
+  } else if (window.key === "month" || sameMonth) {
+    previousSince = shiftMonths(window.since, -1);
+    previousUntil = shiftMonths(window.until, -1);
+    comparison = "month";
   }
   const months = Array.from({ length: 8 }, (_, index) => {
     const date = new Date(Date.UTC(Number(anchor.slice(0, 4)), Number(anchor.slice(5, 7)) - 1 - index, 1));
@@ -125,6 +119,7 @@ function withPrevious(
     ...window,
     previousSince,
     previousUntil,
+    comparison,
     month,
     week,
     months,

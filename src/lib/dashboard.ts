@@ -1,8 +1,8 @@
-import { facebookUniques } from "@/lib/amplitude";
+import { facebookCampaignUniques, facebookUniques } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
-import { insights, leadFormWindow, metrics } from "@/lib/meta";
+import { campaignWindow, insights, leadFormWindow, metrics } from "@/lib/meta";
 import { resolveRange, type ResolvedRange } from "@/lib/ranges";
 
 export type Period = {
@@ -31,6 +31,7 @@ export type CampaignTotal = {
   clicks: number;
   linkClicks: number;
   leadForms: number;
+  demos: number | null;
 };
 
 export type DashboardRange = ResolvedRange & {
@@ -49,6 +50,7 @@ export type DashboardModel = {
   previous: Period | null;
   days: DayPoint[];
   campaigns: CampaignTotal[];
+  unmatchedDemos: number | null;
 };
 
 const empty: DashboardModel = {
@@ -60,6 +62,7 @@ const empty: DashboardModel = {
   previous: null,
   days: [],
   campaigns: [],
+  unmatchedDemos: null,
 };
 
 type SnapshotRow = {
@@ -121,6 +124,40 @@ async function windowDemos(since: string, until: string, snapshots: SnapshotRow[
   } catch {
     return null;
   }
+}
+
+function compactName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function attachDemos(campaigns: CampaignTotal[], groups: { label: string; uniques: number }[] | null) {
+  if (!groups) return null;
+  let unmatched = 0;
+  for (const group of groups) {
+    const ids: string[] = group.label.match(/\d{12,}/g) ?? [];
+    let match = campaigns.find(
+      (campaign) =>
+        campaign.campaignId === group.label ||
+        ids.includes(campaign.campaignId) ||
+        group.label.includes(campaign.campaignId),
+    );
+    if (!match) {
+      const key = compactName(group.label);
+      match = campaigns.find((campaign) => {
+        const name = compactName(campaign.campaignName);
+        return name.length > 8 && (key.includes(name) || name.includes(key));
+      });
+    }
+    if (!match) {
+      unmatched += group.uniques;
+      continue;
+    }
+    match.demos = (match.demos ?? 0) + group.uniques;
+  }
+  for (const campaign of campaigns) {
+    if (campaign.demos == null) campaign.demos = 0;
+  }
+  return unmatched;
 }
 
 function snapshotPeriod(row: SnapshotRow): Period {
@@ -300,30 +337,62 @@ export async function loadDashboard(input: {
       AND day BETWEEN ${range.since} AND ${range.until}
     ORDER BY day
   `;
-  const campaigns = await sql<
-    {
-      campaign_id: string;
-      campaign_name: string;
-      spend: number;
-      impressions: number;
-      clicks: number;
-      link_clicks: number;
-      lead_forms: number;
-    }[]
-  >`
-    SELECT campaign_id, max(campaign_name) AS campaign_name,
-      sum(spend)::float8 AS spend,
-      sum(impressions)::int AS impressions,
-      sum(clicks)::int AS clicks,
-      sum(link_clicks)::int AS link_clicks,
-      sum(lead_forms)::int AS lead_forms
-    FROM campaign_days
-    WHERE account_id = ${ACCOUNT_ID}
-      AND day BETWEEN ${range.since} AND ${range.until}
-    GROUP BY campaign_id
-    ORDER BY sum(spend) DESC
-    LIMIT 20
-  `;
+  const [liveCampaigns, groupedDemos] = await Promise.all([
+    campaignWindow(range.since, range.until).catch(() => null),
+    facebookCampaignUniques(range.since, range.until).catch(() => null),
+  ]);
+  let unmatchedDemos: number | null = null;
+  let campaigns: CampaignTotal[];
+  if (liveCampaigns) {
+    campaigns = liveCampaigns
+      .filter((row) => row.spend > 0)
+      .map((row) => ({
+        campaignId: row.campaignId,
+        campaignName: row.campaignName,
+        spend: row.spend,
+        impressions: row.impressions,
+        clicks: row.clicks,
+        linkClicks: row.linkClicks,
+        leadForms: row.leadForms,
+        demos: null,
+      }));
+    unmatchedDemos = attachDemos(campaigns, groupedDemos);
+  } else {
+    const stored = await sql<
+      {
+        campaign_id: string;
+        campaign_name: string;
+        spend: number;
+        impressions: number;
+        clicks: number;
+        link_clicks: number;
+        lead_forms: number;
+      }[]
+    >`
+      SELECT campaign_id, max(campaign_name) AS campaign_name,
+        sum(spend)::float8 AS spend,
+        sum(impressions)::int AS impressions,
+        sum(clicks)::int AS clicks,
+        sum(link_clicks)::int AS link_clicks,
+        sum(lead_forms)::int AS lead_forms
+      FROM campaign_days
+      WHERE account_id = ${ACCOUNT_ID}
+        AND day BETWEEN ${range.since} AND ${range.until}
+      GROUP BY campaign_id
+      ORDER BY sum(spend) DESC
+      LIMIT 20
+    `;
+    campaigns = stored.map((row) => ({
+      campaignId: row.campaign_id,
+      campaignName: row.campaign_name,
+      spend: row.spend,
+      impressions: row.impressions,
+      clicks: row.clicks,
+      linkClicks: row.link_clicks,
+      leadForms: row.lead_forms,
+      demos: null,
+    }));
+  }
 
   return {
     status: "ready",
@@ -339,14 +408,7 @@ export async function loadDashboard(input: {
     current,
     previous,
     days,
-    campaigns: campaigns.map((row) => ({
-      campaignId: row.campaign_id,
-      campaignName: row.campaign_name,
-      spend: row.spend,
-      impressions: row.impressions,
-      clicks: row.clicks,
-      linkClicks: row.link_clicks,
-      leadForms: row.lead_forms,
-    })),
+    campaigns,
+    unmatchedDemos,
   };
 }
