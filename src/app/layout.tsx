@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TaxGPT Ads",
+  title: "META REPORTING DASHBOARD",
   description: "Internal Meta and Amplitude ads dashboard",
   robots: { index: false, follow: false },
 };

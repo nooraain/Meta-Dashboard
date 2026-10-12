@@ -138,7 +138,7 @@ export function Dashboard({
       <header className="flex items-start justify-between gap-6 border-b border-line pb-6">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-pine">TaxGPT</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Ads</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">META REPORTING DASHBOARD</h1>
           <p className="mt-2 text-sm text-muted">
             Meta account 984644083020099 · Pacific time
             {current ? ` · refreshed ${stamp(current.refreshedAt)}` : ""}

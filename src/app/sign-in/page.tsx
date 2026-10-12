@@ -29,7 +29,7 @@ export default async function SignInPage({
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
       <p className="text-xs uppercase tracking-[0.18em] text-pine">TaxGPT</p>
-      <h1 className="mt-2 text-4xl font-semibold tracking-tight">Ads</h1>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight">META REPORTING DASHBOARD</h1>
       <p className="mt-4 text-muted">Internal marketing numbers. Use your TaxGPT email.</p>
       {failed ? (
         <p className="mt-4 text-sm text-down">That email or password is wrong.</p>
