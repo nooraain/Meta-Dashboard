@@ -58,7 +58,7 @@ export function RangeFilters({ range }: { range: DashboardRange }) {
             key={preset.key}
             className={`rounded-md border px-3 py-2 text-sm ${
               range.key === preset.key
-                ? "border-pine bg-pine text-card"
+                ? "border-pine bg-pine text-white"
                 : "border-line bg-card text-ink hover:border-pine"
             }`}
             href={`/?range=${preset.key}`}
@@ -69,7 +69,7 @@ export function RangeFilters({ range }: { range: DashboardRange }) {
         <a
           className={`rounded-md border px-3 py-2 text-sm ${
             range.key === "custom"
-              ? "border-pine bg-pine text-card"
+              ? "border-pine bg-pine text-white"
               : "border-line bg-card text-ink hover:border-pine"
           }`}
           href={`/?range=custom&from=${range.since}&to=${range.until}`}
@@ -111,7 +111,7 @@ export function RangeFilters({ range }: { range: DashboardRange }) {
               type="date"
             />
           </label>
-          <button className="rounded-md border border-pine bg-pine px-4 py-2 text-sm text-card" type="submit">
+          <button className="rounded-md border border-pine bg-pine px-4 py-2 text-sm text-white" type="submit">
             Apply
           </button>
         </form>

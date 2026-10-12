@@ -72,7 +72,7 @@ export default async function SignInPage({
               required
             />
           </label>
-          <button className="mt-2 h-11 rounded-md bg-pine px-5 text-sm text-card" type="submit">
+          <button className="mt-2 h-11 rounded-md bg-pine px-5 text-sm text-white" type="submit">
             Sign in
           </button>
         </form>

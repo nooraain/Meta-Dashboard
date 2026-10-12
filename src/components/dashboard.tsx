@@ -108,7 +108,7 @@ function RefreshForm({ label }: { label: string }) {
   return (
     <form action="/api/cron/refresh" method="post">
       <button
-        className="rounded-md border border-pine bg-pine px-4 py-2 text-sm text-card"
+        className="rounded-md border border-pine bg-pine px-4 py-2 text-sm text-white"
         type="submit"
       >
         {label}
