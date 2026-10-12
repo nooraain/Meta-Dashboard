@@ -10,9 +10,17 @@ function num(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function credential(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name]?.trim().replace(/^['"]|['"]$/g, "") ?? "";
+    if (value) return value;
+  }
+  return "";
+}
+
 export async function facebookUniques(since: string, until: string): Promise<UniqueSeries | null> {
-  const key = process.env.AMPLITUDE_API_KEY;
-  const secret = process.env.AMPLITUDE_SECRET;
+  const key = credential("AMPLITUDE_API_KEY");
+  const secret = credential("AMPLITUDE_SECRET", "AMPLITUDE_SECRET_KEY");
   if (!key || !secret) return null;
 
   const event = {
@@ -54,7 +62,8 @@ export async function facebookUniques(since: string, until: string): Promise<Uni
     };
   };
   if (!response.ok) {
-    throw new Error("Amplitude request failed");
+    const detail = typeof body.error === "string" ? body.error.replace(/\s+/g, " ").slice(0, 160) : "";
+    throw new Error(detail ? `Amplitude rejected the key (${response.status}): ${detail}` : `Amplitude rejected the key (${response.status})`);
   }
 
   const series = body.data?.series?.[0] ?? [];

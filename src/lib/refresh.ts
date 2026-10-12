@@ -48,7 +48,7 @@ async function saveDays(window: Window, currency: string, refreshedAt: string) {
   const [accountRows, campaignRows, uniques] = await Promise.all([
     insights({ level: "account", since: window.since, until: window.until, timeIncrement: 1 }),
     insights({ level: "campaign", since: window.since, until: window.until, timeIncrement: 1 }),
-    facebookUniques(window.since, window.until),
+    facebookUniques(window.since, window.until).catch(() => null),
   ]);
 
   const days: AccountDay[] = accountRows
@@ -129,7 +129,7 @@ async function savePeriod(period: string, window: Window, currency: string, refr
   if (!sql) throw new Error("DATABASE_URL is not set");
   const [rows, uniques] = await Promise.all([
     insights({ level: "account", since: window.since, until: window.until }),
-    facebookUniques(window.since, window.until),
+    facebookUniques(window.since, window.until).catch(() => null),
   ]);
   const counted = metrics(rows[0] ?? {});
   const snapshot = {

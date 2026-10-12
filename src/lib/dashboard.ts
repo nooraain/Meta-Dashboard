@@ -90,12 +90,18 @@ type TotalsRow = {
 async function metaWindow(since: string, until: string) {
   const [rows, uniques] = await Promise.all([
     insights({ level: "account", since, until }),
-    facebookUniques(since, until).catch(() => null),
+    facebookUniques(since, until).then(
+      (value) => ({ value, error: null as string | null }),
+      (error: unknown) => ({
+        value: null,
+        error: error instanceof Error ? error.message : "Amplitude rejected the key",
+      }),
+    ),
   ]);
   const counted = rows[0]
     ? metrics(rows[0])
     : { spend: 0, impressions: 0, clicks: 0, linkClicks: 0, leadForms: 0, reach: 0 };
-  return { ...counted, demos: uniques?.total ?? null };
+  return { ...counted, demos: uniques.value?.total ?? null, amplitudeError: uniques.error };
 }
 
 async function windowDemos(since: string, until: string, snapshots: SnapshotRow[], allowFetch: boolean) {
@@ -196,6 +202,7 @@ export async function loadDashboard(input: {
       currency,
       refreshedAt,
     };
+    notice = live.amplitudeError ?? previousLive.amplitudeError;
     previous = {
       period: "previous",
       since: range.previousSince,
