@@ -265,17 +265,17 @@ export function Dashboard({
             <h2 className="text-lg font-semibold">Daily spend</h2>
             {data.days.length ? (
               <>
-                <div className="mt-4 flex h-52 items-end gap-1 rounded-md bg-pine-soft px-3 pb-3 pt-8">
+                <div className="mt-4 flex h-52 items-end gap-1 rounded-md border border-line bg-pine-soft px-3 pb-3 pt-8">
                   {data.days.map((day) => (
                     <div key={day.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
                       {data.days.length <= 16 ? (
-                        <span className="text-[10px] leading-none text-pine">{shortMoney(day.spend)}</span>
+                        <span className="text-[10px] leading-none text-muted">{shortMoney(day.spend)}</span>
                       ) : null}
                       <div
                         className="w-full rounded-t-sm bg-pine"
                         style={{
                           height: `${Math.max(4, (day.spend / maxSpend) * (data.days.length <= 16 ? 78 : 100))}%`,
-                          opacity: 0.45 + 0.55 * (day.spend / maxSpend),
+                          opacity: 0.35 + 0.45 * (day.spend / maxSpend),
                         }}
                         title={`${pretty(day.day)} ${money(day.spend, currency)}`}
                       />
@@ -298,7 +298,7 @@ export function Dashboard({
                       {[...data.days].reverse().map((day) => (
                         <tr key={day.day} className="border-b border-line last:border-0">
                           <td className="px-4 py-2">{pretty(day.day)}</td>
-                          <td className="px-4 py-2 text-right font-mono text-pine">{money(day.spend, currency)}</td>
+                          <td className="px-4 py-2 text-right font-mono text-ink">{money(day.spend, currency)}</td>
                         </tr>
                       ))}
                     </tbody>

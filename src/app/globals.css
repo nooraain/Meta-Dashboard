@@ -8,18 +8,18 @@
 @theme {
   --color-paper: #ffffff;
   --color-ink: #0a0a0a;
-  --color-muted: #5b4d6b;
-  --color-line: #f5c2dc;
-  --color-card: #fff5fa;
-  --color-pine: #e91e8c;
-  --color-pine-soft: #fce7f3;
-  --color-sea: #6b21a8;
-  --color-clay: #9333ea;
-  --color-up: #7c3aed;
-  --color-down: #1a1a1a;
-  --color-warn: #fdf2f8;
-  --color-warn-line: #f0abfc;
-  --color-warn-ink: #581c87;
+  --color-muted: #6b6280;
+  --color-line: #f3e8ef;
+  --color-card: #fffcfe;
+  --color-pine: #d888ad;
+  --color-pine-soft: #fef9fc;
+  --color-sea: #7c3aed;
+  --color-clay: #a78bfa;
+  --color-up: #8b5cf6;
+  --color-down: #374151;
+  --color-warn: #fef9fc;
+  --color-warn-line: #f5d0e6;
+  --color-warn-ink: #6b21a8;
 }
 
 body {

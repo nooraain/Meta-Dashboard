@@ -136,7 +136,7 @@ function Highlight({
     <div className="min-w-0 flex-1 rounded-md border border-line bg-card px-4 py-4">
       <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
       <p className="mt-2 truncate text-base font-semibold text-ink">{name}</p>
-      <p className="mt-1 font-mono text-sm text-pine">{detail}</p>
+      <p className="mt-1 font-mono text-sm text-sea">{detail}</p>
     </div>
   );
 }
@@ -310,9 +310,9 @@ export function CampaignBoard({
                 <tr key={campaign.campaignId} className="border-b border-line last:border-0">
                   <td className="max-w-[360px] px-4 py-3">
                     <p className="truncate">{campaign.campaignName || campaign.campaignId}</p>
-                    {marks.length ? <p className="mt-1 text-xs text-pine">{marks.join(" · ")}</p> : null}
+                    {marks.length ? <p className="mt-1 text-xs text-muted">{marks.join(" · ")}</p> : null}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-pine">{money(campaign.spend, currency)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-ink">{money(campaign.spend, currency)}</td>
                   <td className="px-4 py-3 text-right font-mono">{campaign.demos == null ? "—" : integer(campaign.demos)}</td>
                   <td className="px-4 py-3 text-right font-mono">{cost == null ? "—" : money(cost, currency)}</td>
                   <td className="px-4 py-3 text-right font-mono">{mille == null ? "—" : money(mille, currency)}</td>
