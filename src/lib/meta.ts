@@ -6,6 +6,7 @@ type Insight = {
   date_start?: string;
   campaign_id?: string;
   campaign_name?: string;
+  objective?: string;
   spend?: string;
   impressions?: string;
   reach?: string;
@@ -50,10 +51,7 @@ export function metrics(row: Insight): Metrics {
     impressions: num(row.impressions),
     clicks: num(row.clicks),
     linkClicks: actionValue(row, (type) => type === "link_click"),
-    leadForms: actionValue(
-      row,
-      (type) => type === "leadgen.other" || type === "onsite_conversion.lead_grouped",
-    ),
+    leadForms: leadFormResults(row),
     reach: num(row.reach),
   };
 }
@@ -100,6 +98,30 @@ export async function accountInfo() {
     name: body.name || ACCOUNT_ID,
     timezone: body.timezone_name || "America/Los_Angeles",
     currency: body.currency || "USD",
+  };
+}
+
+function leadFormResults(row: Insight) {
+  return actionValue(row, (type) => type === "onsite_conversion.lead_grouped");
+}
+
+function leadObjective(objective: string | undefined) {
+  return objective === "OUTCOME_LEADS" || objective === "LEAD_GENERATION";
+}
+
+export async function leadFormWindow(since: string, until: string) {
+  const rows = (await graph(`act_${ACCOUNT_ID}/insights`, {
+    fields: "campaign_id,objective,spend,actions,conversions",
+    level: "campaign",
+    time_range: JSON.stringify({ since, until }),
+    use_unified_attribution_setting: "true",
+    limit: "500",
+  })) as Insight[];
+  const named = rows.filter((row) => leadObjective(row.objective));
+  const chosen = named.length ? named : rows.filter((row) => leadFormResults(row) > 0);
+  return {
+    spend: Math.round(chosen.reduce((total, row) => total + num(row.spend), 0) * 100) / 100,
+    leadForms: chosen.reduce((total, row) => total + leadFormResults(row), 0),
   };
 }
 

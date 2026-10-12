@@ -98,7 +98,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 function periodFacts(period: Period) {
   const cpa = ratio(period.spend, period.demos);
-  const cpl = ratio(period.spend, period.leadForms);
+  const cpl = period.leadSpend == null ? null : ratio(period.leadSpend, period.leadForms);
   const cpm = period.impressions ? (period.spend / period.impressions) * 1000 : null;
   return { cpa, cpl, cpm };
 }
@@ -248,13 +248,14 @@ export function Dashboard({
             <Fact label="Link clicks" value={integer(current.linkClicks)} />
             <Fact label="Reach" value={current.reach == null ? "—" : integer(current.reach)} />
             <Fact label="Lead forms" value={integer(current.leadForms)} />
-            <Fact label="CPL" value={currentFacts.cpl == null ? "—" : money(currentFacts.cpl, currency)} />
+            <Fact label="Cost per lead" value={currentFacts.cpl == null ? "—" : money(currentFacts.cpl, currency)} />
             <Fact label="CPM" value={currentFacts.cpm == null ? "—" : money(currentFacts.cpm, currency)} />
           </section>
           <p className="-mt-6 text-sm text-muted">
             {current.reach == null
               ? "Reach stays blank on this range. It is the people reached in one Meta window, not a sum of daily reach."
-              : "Reach is the people reached in this window. It is not a sum of daily reach."}
+              : "Reach is the people reached in this window. It is not a sum of daily reach."}{" "}
+            Cost per lead divides spend from lead campaigns by Meta’s lead (form) results.
           </p>
 
           <section>

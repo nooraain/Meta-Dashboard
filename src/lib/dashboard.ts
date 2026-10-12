@@ -2,7 +2,7 @@ import { facebookUniques } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
-import { insights, metrics } from "@/lib/meta";
+import { insights, leadFormWindow, metrics } from "@/lib/meta";
 import { resolveRange, type ResolvedRange } from "@/lib/ranges";
 
 export type Period = {
@@ -16,6 +16,7 @@ export type Period = {
   reach: number | null;
   demos: number | null;
   leadForms: number;
+  leadSpend: number | null;
   currency: string;
   refreshedAt: string;
 };
@@ -88,7 +89,7 @@ type TotalsRow = {
 };
 
 async function metaWindow(since: string, until: string) {
-  const [rows, uniques] = await Promise.all([
+  const [rows, uniques, leads] = await Promise.all([
     insights({ level: "account", since, until }),
     facebookUniques(since, until).then(
       (value) => ({ value, error: null as string | null }),
@@ -97,11 +98,18 @@ async function metaWindow(since: string, until: string) {
         error: error instanceof Error ? error.message : "Amplitude rejected the key",
       }),
     ),
+    leadFormWindow(since, until).catch(() => null),
   ]);
   const counted = rows[0]
     ? metrics(rows[0])
     : { spend: 0, impressions: 0, clicks: 0, linkClicks: 0, leadForms: 0, reach: 0 };
-  return { ...counted, demos: uniques.value?.total ?? null, amplitudeError: uniques.error };
+  return {
+    ...counted,
+    leadForms: leads?.leadForms ?? counted.leadForms,
+    leadSpend: leads?.spend ?? null,
+    demos: uniques.value?.total ?? null,
+    amplitudeError: uniques.error,
+  };
 }
 
 async function windowDemos(since: string, until: string, snapshots: SnapshotRow[], allowFetch: boolean) {
@@ -127,6 +135,7 @@ function snapshotPeriod(row: SnapshotRow): Period {
     reach: row.reach,
     demos: row.demos,
     leadForms: row.lead_forms,
+    leadSpend: null,
     currency: row.currency,
     refreshedAt: row.refreshed_at.toISOString(),
   };
@@ -199,6 +208,7 @@ export async function loadDashboard(input: {
       reach: live.reach,
       demos: live.demos,
       leadForms: live.leadForms,
+      leadSpend: live.leadSpend,
       currency,
       refreshedAt,
     };
@@ -214,6 +224,7 @@ export async function loadDashboard(input: {
       reach: previousLive.reach,
       demos: previousLive.demos,
       leadForms: previousLive.leadForms,
+      leadSpend: previousLive.leadSpend,
       currency,
       refreshedAt,
     };
@@ -236,6 +247,7 @@ export async function loadDashboard(input: {
           reach: null,
           demos: await windowDemos(range.since, range.until, periods, storedForWindow === spanDays),
           leadForms: currentTotals?.lead_forms ?? 0,
+          leadSpend: null,
           currency: currentTotals?.currency ?? currency,
           refreshedAt: currentTotals?.refreshed_at?.toISOString() ?? latest?.refreshed_at.toISOString() ?? refreshedAt,
         };
@@ -265,6 +277,7 @@ export async function loadDashboard(input: {
                 previousStored === previousSpan,
               ),
               leadForms: previousTotals?.lead_forms ?? 0,
+              leadSpend: null,
               currency: previousTotals?.currency ?? currency,
               refreshedAt: previousTotals?.refreshed_at?.toISOString() ?? refreshedAt,
             }
