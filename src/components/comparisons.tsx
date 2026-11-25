@@ -230,7 +230,7 @@ export function PerformanceComparison({
         ]}
       />
       <CompareTable
-        title="Lead performance"
+        title="Leads Performance (Meta)"
         caption="Lead spend is spend from lead campaigns. Leads are Meta lead (form) results. Cost per lead divides that spend by those results."
         earlier={earlier}
         later={later}
@@ -254,6 +254,44 @@ export function PerformanceComparison({
             later: show(currentCpl, (value) => money(value, currency)),
             delta: change(currentCpl, previousCpl),
             better: "down",
+          },
+        ]}
+      />
+      <CompareTable
+        title="Leads to Demo Booked (Amplitude)"
+        caption="Matches Amplitude Meta Leads Campaign to Demos Booked: unique Lead Email Collected (Meta lead signup_source), then demo_booked within 30 days, excluding emails containing taxgpt or usemomentic."
+        earlier={earlier}
+        later={later}
+        rows={[
+          {
+            label: "Lead emails",
+            earlier: show(previous?.funnelLeadEmails ?? null, integer),
+            later: show(current.funnelLeadEmails, integer),
+            delta: change(current.funnelLeadEmails, previous?.funnelLeadEmails ?? null),
+            better: "up",
+          },
+          {
+            label: "Demos booked",
+            earlier: show(previous?.funnelDemos ?? null, integer),
+            later: show(current.funnelDemos, integer),
+            delta: change(current.funnelDemos, previous?.funnelDemos ?? null),
+            better: "up",
+          },
+          {
+            label: "Conversion",
+            earlier: show(
+              ratio(previous?.funnelDemos ?? null, previous?.funnelLeadEmails ?? null),
+              (value) => `${(value * 100).toFixed(2)}%`,
+            ),
+            later: show(
+              ratio(current.funnelDemos, current.funnelLeadEmails),
+              (value) => `${(value * 100).toFixed(2)}%`,
+            ),
+            delta: change(
+              ratio(current.funnelDemos, current.funnelLeadEmails),
+              previous ? ratio(previous.funnelDemos, previous.funnelLeadEmails) : null,
+            ),
+            better: "up",
           },
         ]}
       />

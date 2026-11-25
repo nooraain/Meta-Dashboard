@@ -1,4 +1,4 @@
-import { facebookUniques } from "@/lib/amplitude";
+import { facebookUniques, metaLeadFunnel } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
@@ -17,6 +17,8 @@ export type Period = {
   demos: number | null;
   leadForms: number;
   leadSpend: number | null;
+  funnelLeadEmails: number | null;
+  funnelDemos: number | null;
   currency: string;
   refreshedAt: string;
 };
@@ -90,9 +92,16 @@ type TotalsRow = {
 };
 
 async function metaWindow(since: string, until: string) {
-  const [rows, uniques, leads] = await Promise.all([
+  const [rows, uniques, funnel, leads] = await Promise.all([
     insights({ level: "account", since, until }),
     facebookUniques(since, until).then(
+      (value) => ({ value, error: null as string | null }),
+      (error: unknown) => ({
+        value: null,
+        error: error instanceof Error ? error.message : "Amplitude rejected the key",
+      }),
+    ),
+    metaLeadFunnel(since, until).then(
       (value) => ({ value, error: null as string | null }),
       (error: unknown) => ({
         value: null,
@@ -109,7 +118,9 @@ async function metaWindow(since: string, until: string) {
     leadForms: leads?.leadForms ?? counted.leadForms,
     leadSpend: leads?.spend ?? null,
     demos: uniques.value?.total ?? null,
-    amplitudeError: uniques.error,
+    funnelLeadEmails: funnel.value?.leadEmails ?? null,
+    funnelDemos: funnel.value?.demosBooked ?? null,
+    amplitudeError: uniques.error ?? funnel.error,
   };
 }
 
@@ -137,6 +148,8 @@ function snapshotPeriod(row: SnapshotRow): Period {
     demos: row.demos,
     leadForms: row.lead_forms,
     leadSpend: null,
+    funnelLeadEmails: null,
+    funnelDemos: null,
     currency: row.currency,
     refreshedAt: row.refreshed_at.toISOString(),
   };
@@ -210,6 +223,8 @@ export async function loadDashboard(input: {
       demos: live.demos,
       leadForms: live.leadForms,
       leadSpend: live.leadSpend,
+      funnelLeadEmails: live.funnelLeadEmails,
+      funnelDemos: live.funnelDemos,
       currency,
       refreshedAt,
     };
@@ -226,6 +241,8 @@ export async function loadDashboard(input: {
       demos: previousLive.demos,
       leadForms: previousLive.leadForms,
       leadSpend: previousLive.leadSpend,
+      funnelLeadEmails: previousLive.funnelLeadEmails,
+      funnelDemos: previousLive.funnelDemos,
       currency,
       refreshedAt,
     };
@@ -249,6 +266,8 @@ export async function loadDashboard(input: {
           demos: await windowDemos(range.since, range.until, periods, storedForWindow === spanDays),
           leadForms: currentTotals?.lead_forms ?? 0,
           leadSpend: null,
+          funnelLeadEmails: null,
+          funnelDemos: null,
           currency: currentTotals?.currency ?? currency,
           refreshedAt: currentTotals?.refreshed_at?.toISOString() ?? latest?.refreshed_at.toISOString() ?? refreshedAt,
         };
@@ -279,6 +298,8 @@ export async function loadDashboard(input: {
               ),
               leadForms: previousTotals?.lead_forms ?? 0,
               leadSpend: null,
+              funnelLeadEmails: null,
+              funnelDemos: null,
               currency: previousTotals?.currency ?? currency,
               refreshedAt: previousTotals?.refreshed_at?.toISOString() ?? refreshedAt,
             }
