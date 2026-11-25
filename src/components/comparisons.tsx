@@ -152,8 +152,8 @@ export function PerformanceComparison({
   previous: Period | null;
   currency: string;
 }) {
-  const currentCpa = ratio(current.spend, current.demos);
-  const previousCpa = previous ? ratio(previous.spend, previous.demos) : null;
+  const currentCpa = ratio(current.demoSpend ?? current.spend, current.demos);
+  const previousCpa = previous ? ratio(previous.demoSpend ?? previous.spend, previous.demos) : null;
   const currentCpm = current.impressions ? (current.spend / current.impressions) * 1000 : null;
   const previousCpm = previous?.impressions ? (previous.spend / previous.impressions) * 1000 : null;
   const currentCpl = ratio(current.leadSpend, current.leadForms);
@@ -175,15 +175,15 @@ export function PerformanceComparison({
     <>
       <CompareTable
         title="Demo Performance"
-        caption={`${basis} Change is the later window against the earlier one. Demos match Amplitude Meta demos booked: unique Demo Booked users with initial utm source facebook. CPA is account spend divided by that total. CTR is link clicks divided by impressions.`}
+        caption={`${basis} Change is the later window against the earlier one. Demos match Amplitude Meta demos booked: unique Demo Booked users with initial utm source facebook. Spend in this table is demo-campaign spend only (lead campaigns excluded). CPA is that spend divided by demos. CTR is link clicks divided by impressions.`}
         earlier={earlier}
         later={later}
         rows={[
           {
             label: "Spend",
-            earlier: previous ? money(previous.spend, currency) : "—",
-            later: money(current.spend, currency),
-            delta: change(current.spend, previous?.spend ?? null),
+            earlier: show(previous?.demoSpend ?? previous?.spend ?? null, (value) => money(value, currency)),
+            later: show(current.demoSpend ?? current.spend, (value) => money(value, currency)),
+            delta: change(current.demoSpend ?? current.spend, previous?.demoSpend ?? previous?.spend ?? null),
           },
           {
             label: "Demos",
@@ -315,7 +315,7 @@ export function CampaignBoard({
     <section>
       <h2 className="text-lg font-semibold">Top campaigns</h2>
       <p className="mt-1 max-w-3xl text-sm text-muted">
-        Ranked for {windowLabel(since, until)}, the dates selected above. Demos are Meta’s demo_booked results on that campaign. CPA divides campaign spend by those results. CPM is spend per 1,000 impressions.
+        Ranked for {windowLabel(since, until)}, the dates selected above. Demo campaigns only; lead campaigns are excluded. Demos are Meta’s demo_booked results on that campaign. CPA divides campaign spend by those results. CPM is spend per 1,000 impressions.
       </p>
       <div className="mt-4 flex flex-col gap-4 sm:flex-row">
         <Highlight

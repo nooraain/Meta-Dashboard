@@ -113,25 +113,47 @@ function leadObjective(objective: string | undefined) {
   return objective === "OUTCOME_LEADS" || objective === "LEAD_GENERATION";
 }
 
-export async function leadFormWindow(since: string, until: string) {
-  const rows = (await graph(`act_${ACCOUNT_ID}/insights`, {
-    fields: "campaign_id,objective,spend,actions,conversions",
+async function campaignObjectiveRows(since: string, until: string) {
+  return (await graph(`act_${ACCOUNT_ID}/insights`, {
+    fields: "campaign_id,campaign_name,objective,spend,impressions,reach,clicks,actions,conversions",
     level: "campaign",
     time_range: JSON.stringify({ since, until }),
     use_unified_attribution_setting: "true",
     limit: "500",
   })) as Insight[];
+}
+
+function campaignSpend(rows: Insight[]) {
+  return Math.round(rows.reduce((total, row) => total + num(row.spend), 0) * 100) / 100;
+}
+
+export async function leadFormWindow(since: string, until: string) {
+  const rows = await campaignObjectiveRows(since, until);
   const named = rows.filter((row) => leadObjective(row.objective));
   const chosen = named.length ? named : rows.filter((row) => leadFormResults(row) > 0);
   return {
-    spend: Math.round(chosen.reduce((total, row) => total + num(row.spend), 0) * 100) / 100,
+    spend: campaignSpend(chosen),
     leadForms: chosen.reduce((total, row) => total + leadFormResults(row), 0),
   };
 }
 
+export async function demoCampaignWindow(since: string, until: string) {
+  const rows = await campaignObjectiveRows(since, until);
+  const nonLead = rows.filter((row) => !leadObjective(row.objective));
+  const chosen = nonLead.length
+    ? nonLead
+    : rows.filter((row) => demoResults(row) > 0 && leadFormResults(row) === 0);
+  return { spend: campaignSpend(chosen) };
+}
+
+function isLeadCampaign(row: Insight) {
+  return leadObjective(row.objective) || (leadFormResults(row) > 0 && demoResults(row) === 0);
+}
+
 export async function campaignWindow(since: string, until: string) {
-  const rows = await insights({ level: "campaign", since, until });
+  const rows = await campaignObjectiveRows(since, until);
   return rows
+    .filter((row) => !isLeadCampaign(row))
     .map((row) => ({
       campaignId: row.campaign_id ?? "",
       campaignName: row.campaign_name ?? "",

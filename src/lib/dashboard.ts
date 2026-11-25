@@ -2,7 +2,7 @@ import { facebookUniques, metaLeadFunnel } from "@/lib/amplitude";
 import { ACCOUNT_ID, TIME_ZONE } from "@/lib/constants";
 import { inclusiveDays, ymdInZone } from "@/lib/dates";
 import { db, ensureSchema } from "@/lib/db";
-import { campaignWindow, insights, leadFormWindow, metrics } from "@/lib/meta";
+import { campaignWindow, demoCampaignWindow, insights, leadFormWindow, metrics } from "@/lib/meta";
 import { resolveRange, type ResolvedRange } from "@/lib/ranges";
 
 export type Period = {
@@ -17,6 +17,7 @@ export type Period = {
   demos: number | null;
   leadForms: number;
   leadSpend: number | null;
+  demoSpend: number | null;
   funnelLeadEmails: number | null;
   funnelDemos: number | null;
   currency: string;
@@ -92,7 +93,7 @@ type TotalsRow = {
 };
 
 async function metaWindow(since: string, until: string) {
-  const [rows, uniques, funnel, leads] = await Promise.all([
+  const [rows, uniques, funnel, leads, demoCampaigns] = await Promise.all([
     insights({ level: "account", since, until }),
     facebookUniques(since, until).then(
       (value) => ({ value, error: null as string | null }),
@@ -109,6 +110,7 @@ async function metaWindow(since: string, until: string) {
       }),
     ),
     leadFormWindow(since, until).catch(() => null),
+    demoCampaignWindow(since, until).catch(() => null),
   ]);
   const counted = rows[0]
     ? metrics(rows[0])
@@ -117,6 +119,7 @@ async function metaWindow(since: string, until: string) {
     ...counted,
     leadForms: leads?.leadForms ?? counted.leadForms,
     leadSpend: leads?.spend ?? null,
+    demoSpend: demoCampaigns?.spend ?? null,
     demos: uniques.value?.total ?? null,
     funnelLeadEmails: funnel.value?.leadEmails ?? null,
     funnelDemos: funnel.value?.demosBooked ?? null,
@@ -148,6 +151,7 @@ function snapshotPeriod(row: SnapshotRow): Period {
     demos: row.demos,
     leadForms: row.lead_forms,
     leadSpend: null,
+    demoSpend: null,
     funnelLeadEmails: null,
     funnelDemos: null,
     currency: row.currency,
@@ -223,6 +227,7 @@ export async function loadDashboard(input: {
       demos: live.demos,
       leadForms: live.leadForms,
       leadSpend: live.leadSpend,
+      demoSpend: live.demoSpend,
       funnelLeadEmails: live.funnelLeadEmails,
       funnelDemos: live.funnelDemos,
       currency,
@@ -241,6 +246,7 @@ export async function loadDashboard(input: {
       demos: previousLive.demos,
       leadForms: previousLive.leadForms,
       leadSpend: previousLive.leadSpend,
+      demoSpend: previousLive.demoSpend,
       funnelLeadEmails: previousLive.funnelLeadEmails,
       funnelDemos: previousLive.funnelDemos,
       currency,
@@ -266,6 +272,7 @@ export async function loadDashboard(input: {
           demos: await windowDemos(range.since, range.until, periods, storedForWindow === spanDays),
           leadForms: currentTotals?.lead_forms ?? 0,
           leadSpend: null,
+          demoSpend: null,
           funnelLeadEmails: null,
           funnelDemos: null,
           currency: currentTotals?.currency ?? currency,
@@ -298,6 +305,7 @@ export async function loadDashboard(input: {
               ),
               leadForms: previousTotals?.lead_forms ?? 0,
               leadSpend: null,
+              demoSpend: null,
               funnelLeadEmails: null,
               funnelDemos: null,
               currency: previousTotals?.currency ?? currency,

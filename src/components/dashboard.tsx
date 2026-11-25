@@ -98,7 +98,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function periodFacts(period: Period) {
-  const cpa = ratio(period.spend, period.demos);
+  const cpa = ratio(period.demoSpend ?? period.spend, period.demos);
   const cpl = period.leadSpend == null ? null : ratio(period.leadSpend, period.leadForms);
   const cpm = period.impressions ? (period.spend / period.impressions) * 1000 : null;
   return { cpa, cpl, cpm };
@@ -240,7 +240,7 @@ export function Dashboard({
               />
             </div>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-              Demos match Amplitude Meta demos booked: unique Demo Booked users whose initial utm source is facebook, excluding the random Calendly cohort and the email taxgpt. CPA divides Meta spend by that unique total for the window, not a sum of daily uniques. Lead forms stay from Meta.
+              Demos match Amplitude Meta demos booked: unique Demo Booked users whose initial utm source is facebook, excluding the random Calendly cohort and the email taxgpt. CPA divides spend on demo campaigns (not lead campaigns) by that unique total for the window, not a sum of daily uniques. Lead forms stay from Meta.
             </p>
           </section>
 
