@@ -158,6 +158,9 @@ export function PerformanceComparison({
   const previousCpm = previous?.impressions ? (previous.spend / previous.impressions) * 1000 : null;
   const currentCpl = ratio(current.leadSpend, current.leadForms);
   const previousCpl = previous ? ratio(previous.leadSpend, previous.leadForms) : null;
+  const currentCtr = current.impressions ? current.linkClicks / current.impressions : null;
+  const previousCtr = previous?.impressions ? previous.linkClicks / previous.impressions : null;
+  const formatCtr = (value: number) => `${(value * 100).toFixed(2)}%`;
   const earlier = previous ? windowLabel(previous.since, previous.until) : "Earlier";
   const later = windowLabel(current.since, current.until);
   const basis =
@@ -171,8 +174,8 @@ export function PerformanceComparison({
   return (
     <>
       <CompareTable
-        title="Performance"
-        caption={`${basis} Change is the later window against the earlier one. Demos are the Meta lead email to demo_booked funnel in Amplitude. CPA is account spend divided by that total.`}
+        title="Demo Performance"
+        caption={`${basis} Change is the later window against the earlier one. Demos match Amplitude Meta demos booked: unique Demo Booked users with initial utm source facebook. CPA is account spend divided by that total. CTR is link clicks divided by impressions.`}
         earlier={earlier}
         later={later}
         rows={[
@@ -208,6 +211,13 @@ export function PerformanceComparison({
             earlier: previous ? integer(previous.impressions) : "—",
             later: integer(current.impressions),
             delta: change(current.impressions, previous?.impressions ?? null),
+            better: "up",
+          },
+          {
+            label: "CTR",
+            earlier: show(previousCtr, formatCtr),
+            later: show(currentCtr, formatCtr),
+            delta: change(currentCtr, previousCtr),
             better: "up",
           },
           {
