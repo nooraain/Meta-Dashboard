@@ -214,7 +214,7 @@ export function Dashboard({
                   ? `${data.notice} Spend is already from Meta.`
                   : data.range.totalsFrom === "stored" && data.range.storedDays < data.range.spanDays
                     ? "Demos and CPA stay blank until every day in this range is stored. Spend shown is only the days already saved."
-                    : "Demos and CPA stay blank until Amplitude returns the Facebook unique count. Spend is already from Meta."}
+                    : "Demos and CPA stay blank until Amplitude returns the Meta lead funnel count. Spend is already from Meta."}
               </p>
             ) : null}
             <div className="mt-6 flex flex-col gap-4 sm:flex-row">
@@ -240,7 +240,7 @@ export function Dashboard({
               />
             </div>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-              Demos are unique Demo Booked users whose initial source is facebook, excluding the random Calendly cohort and the email taxgpt. CPA divides Meta spend by that unique total. Daily uniques are not added together.
+              Demos match Amplitude Meta Leads Campaign to Demos Booked: unique users who submitted a Meta lead form email, then booked a demo within 30 days, excluding emails containing taxgpt or usemomentic. CPA divides Meta spend by that total. Lead forms stay from Meta.
             </p>
           </section>
 

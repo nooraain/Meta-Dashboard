@@ -172,7 +172,7 @@ export function PerformanceComparison({
     <>
       <CompareTable
         title="Performance"
-        caption={`${basis} Change is the later window against the earlier one. CPA is account spend divided by Facebook demo uniques.`}
+        caption={`${basis} Change is the later window against the earlier one. Demos are the Meta lead email to demo_booked funnel in Amplitude. CPA is account spend divided by that total.`}
         earlier={earlier}
         later={later}
         rows={[
