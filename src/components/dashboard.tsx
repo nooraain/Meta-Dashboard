@@ -97,19 +97,9 @@ function Metric({
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-1 font-mono text-lg text-ink">{value}</p>
-    </div>
-  );
-}
-
 function periodFacts(period: Period) {
   const cpa = ratio(period.demoSpend ?? period.spend, period.demos);
-  const cpl = period.leadSpend == null ? null : ratio(period.leadSpend, period.leadForms);
-  return { cpa, cpl };
+  return { cpa };
 }
 
 function RefreshForm({ label }: { label: string }) {
@@ -225,49 +215,45 @@ export function Dashboard({
                     : "Demos and CPA stay blank until Amplitude returns Meta demos booked (initial utm source facebook). Spend is already from Meta."}
               </p>
             ) : null}
-            <div className="mt-6 overflow-hidden rounded-md border border-line bg-card">
-              <div className="h-1 bg-pine" />
-              <div className="px-5 py-5">
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-                  <Fact label="Total Spend" value={money(current.spend, currency)} />
-                  <Fact
-                    label="Demos Booked"
-                    value={current.demos == null ? "—" : integer(current.demos)}
-                  />
-                  <Fact label="CPA" value={currentFacts.cpa == null ? "—" : money(currentFacts.cpa, currency)} />
-                  <Fact label="No. of Leads" value={integer(current.leadForms)} />
-                  <Fact label="CPL" value={currentFacts.cpl == null ? "—" : money(currentFacts.cpl, currency)} />
-                </div>
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  Total Spend is all Meta campaigns. CPA is demo-campaign spend divided by Amplitude demos booked.
-                  CPL is lead-campaign spend divided by Meta lead form results.
-                </p>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <Metric
-                label="Demo spend"
+                label="Total Spend"
                 tone="pine"
+                value={money(current.spend, currency)}
+                previous={previous ? money(previous.spend, currency) : null}
+              />
+              <Metric
+                label="Demo Spend"
+                tone="sea"
                 value={money(current.demoSpend ?? current.spend, currency)}
                 previous={previous ? money(previous.demoSpend ?? previous.spend, currency) : null}
               />
               <Metric
-                label="Demos"
-                tone="sea"
+                label="Demos Booked"
+                tone="clay"
                 value={current.demos == null ? "—" : integer(current.demos)}
                 previous={previous?.demos == null ? null : integer(previous.demos)}
                 better="up"
               />
               <Metric
                 label="CPA"
-                tone="clay"
+                tone="pine"
                 value={currentFacts.cpa == null ? "—" : money(currentFacts.cpa, currency)}
                 previous={previousFacts?.cpa == null ? null : money(previousFacts.cpa, currency)}
                 better="down"
               />
+              <Metric
+                label="Lead to Demo Booked"
+                tone="sea"
+                value={current.funnelDemos == null ? "—" : integer(current.funnelDemos)}
+                previous={previous?.funnelDemos == null ? null : integer(previous.funnelDemos)}
+                better="up"
+              />
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-              Demos match Amplitude Meta demos booked: unique Demo Booked users whose initial utm source is facebook, excluding the random Calendly cohort and the email taxgpt. CPA divides spend on demo campaigns (not lead campaigns) by that unique total for the window, not a sum of daily uniques. Lead forms stay from Meta.
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
+              Total Spend is all Meta campaigns; Demo Spend excludes lead campaigns. Demos Booked match Amplitude Meta
+              demos (facebook utm, cohort exclusions). CPA is demo spend divided by those demos. Lead to Demo Booked is
+              the Amplitude funnel: lead email collected (Meta) then demo_booked within 30 days.
             </p>
           </section>
 
