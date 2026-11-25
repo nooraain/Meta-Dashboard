@@ -63,28 +63,33 @@ function CompareTable({
   }[];
 }) {
   return (
-    <section>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mt-1 max-w-3xl text-sm text-muted">{caption}</p>
-      <div className="mt-4 overflow-x-auto rounded-md border border-line bg-card">
+    <section className="rounded-2xl border border-line/80 bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
+      <h2 className="text-base font-semibold tracking-tight text-ink">{title}</h2>
+      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted">{caption}</p>
+      <div className="mt-5 overflow-x-auto rounded-xl border border-line/80">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
+          <thead className="border-b border-line bg-pine-soft/50 text-[11px] uppercase tracking-[0.12em] text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Metric</th>
-              <th className="px-4 py-3 text-right font-medium">{earlier}</th>
-              <th className="px-4 py-3 text-right font-medium">{later}</th>
-              <th className="px-4 py-3 text-right font-medium">Change</th>
+              <th className="px-4 py-3.5 font-semibold">Metric</th>
+              <th className="px-4 py-3.5 text-right font-semibold">{earlier}</th>
+              <th className="px-4 py-3.5 text-right font-semibold">{later}</th>
+              <th className="px-4 py-3.5 text-right font-semibold">Change</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {rows.map((row, index) => {
               const delta = deltaText(row.delta, row.better);
               return (
-                <tr key={row.label} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3">{row.label}</td>
-                  <td className="px-4 py-3 text-right font-mono">{row.earlier}</td>
-                  <td className="px-4 py-3 text-right font-mono">{row.later}</td>
-                  <td className={`px-4 py-3 text-right font-mono ${delta.className}`}>{delta.text}</td>
+                <tr
+                  key={row.label}
+                  className={`border-b border-line/80 last:border-0 ${
+                    index % 2 === 0 ? "bg-card" : "bg-pine-soft/30"
+                  }`}
+                >
+                  <td className="px-4 py-3.5 font-medium text-ink">{row.label}</td>
+                  <td className="px-4 py-3.5 text-right font-mono text-ink/90">{row.earlier}</td>
+                  <td className="px-4 py-3.5 text-right font-mono font-medium text-ink">{row.later}</td>
+                  <td className={`px-4 py-3.5 text-right font-mono ${delta.className}`}>{delta.text}</td>
                 </tr>
               );
             })}
@@ -133,10 +138,10 @@ function Highlight({
   detail: string;
 }) {
   return (
-    <div className="min-w-0 flex-1 rounded-md border border-line bg-card px-4 py-4">
-      <p className="text-xs uppercase tracking-[0.14em] text-muted">{label}</p>
+    <div className="min-w-0 flex-1 rounded-xl border border-line/80 bg-card px-4 py-4 shadow-[var(--shadow-card)]">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted">{label}</p>
       <p className="mt-2 truncate text-base font-semibold text-ink">{name}</p>
-      <p className="mt-1 font-mono text-sm text-sea">{detail}</p>
+      <p className="mt-1 font-mono text-sm font-medium text-sea">{detail}</p>
     </div>
   );
 }
@@ -172,7 +177,7 @@ export function PerformanceComparison({
   const show = (value: number | null, format: (value: number) => string) => (value == null ? "—" : format(value));
 
   return (
-    <>
+    <div className="flex flex-col gap-8">
       <CompareTable
         title="Demo Performance"
         caption={`${basis} Change is the later window against the earlier one. Demos match Amplitude Meta demos booked: unique Demo Booked users with initial utm source facebook. Spend in this table is demo-campaign spend only (lead campaigns excluded). CPA is that spend divided by demos. CTR is link clicks divided by impressions.`}
@@ -295,7 +300,7 @@ export function PerformanceComparison({
           },
         ]}
       />
-    </>
+    </div>
   );
 }
 
@@ -312,12 +317,12 @@ export function CampaignBoard({
 }) {
   const { listed, topDemos, topSpend, bestCpa } = ranked(campaigns);
   return (
-    <section>
-      <h2 className="text-lg font-semibold">Top campaigns</h2>
-      <p className="mt-1 max-w-3xl text-sm text-muted">
+    <section className="rounded-2xl border border-line/80 bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
+      <h2 className="text-base font-semibold tracking-tight text-ink">Top campaigns</h2>
+      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted">
         Ranked for {windowLabel(since, until)}, the dates selected above. Demo campaigns only; lead campaigns are excluded. Demos are Meta’s demo_booked results on that campaign. CPA divides campaign spend by those results. CPM is spend per 1,000 impressions.
       </p>
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row">
         <Highlight
           label="Most demos"
           name={topDemos?.campaignName || "—"}
@@ -334,19 +339,19 @@ export function CampaignBoard({
           detail={bestCpa && cpa(bestCpa) != null ? money(cpa(bestCpa) as number, currency) : "—"}
         />
       </div>
-      <div className="mt-4 overflow-x-auto rounded-md border border-line bg-card">
+      <div className="mt-5 overflow-x-auto rounded-xl border border-line/80">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-line text-xs uppercase tracking-[0.14em] text-muted">
+          <thead className="border-b border-line bg-pine-soft/50 text-[11px] uppercase tracking-[0.12em] text-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Campaign</th>
-              <th className="px-4 py-3 text-right font-medium">Spend</th>
-              <th className="px-4 py-3 text-right font-medium">Demos</th>
-              <th className="px-4 py-3 text-right font-medium">CPA</th>
-              <th className="px-4 py-3 text-right font-medium">CPM</th>
+              <th className="px-4 py-3.5 font-semibold">Campaign</th>
+              <th className="px-4 py-3.5 text-right font-semibold">Spend</th>
+              <th className="px-4 py-3.5 text-right font-semibold">Demos</th>
+              <th className="px-4 py-3.5 text-right font-semibold">CPA</th>
+              <th className="px-4 py-3.5 text-right font-semibold">CPM</th>
             </tr>
           </thead>
           <tbody>
-            {listed.map((campaign) => {
+            {listed.map((campaign, index) => {
               const cost = cpa(campaign);
               const mille = cpm(campaign);
               const marks = [
@@ -355,15 +360,20 @@ export function CampaignBoard({
                 campaign.campaignId === bestCpa?.campaignId ? "Best CPA" : "",
               ].filter(Boolean);
               return (
-                <tr key={campaign.campaignId} className="border-b border-line last:border-0">
-                  <td className="max-w-[360px] px-4 py-3">
-                    <p className="truncate">{campaign.campaignName || campaign.campaignId}</p>
-                    {marks.length ? <p className="mt-1 text-xs text-muted">{marks.join(" · ")}</p> : null}
+                <tr
+                  key={campaign.campaignId}
+                  className={`border-b border-line/80 last:border-0 ${
+                    index % 2 === 0 ? "bg-card" : "bg-pine-soft/30"
+                  }`}
+                >
+                  <td className="max-w-[360px] px-4 py-3.5">
+                    <p className="truncate font-medium text-ink">{campaign.campaignName || campaign.campaignId}</p>
+                    {marks.length ? <p className="mt-1 text-xs text-sea/90">{marks.join(" · ")}</p> : null}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-ink">{money(campaign.spend, currency)}</td>
-                  <td className="px-4 py-3 text-right font-mono">{campaign.demos == null ? "—" : integer(campaign.demos)}</td>
-                  <td className="px-4 py-3 text-right font-mono">{cost == null ? "—" : money(cost, currency)}</td>
-                  <td className="px-4 py-3 text-right font-mono">{mille == null ? "—" : money(mille, currency)}</td>
+                  <td className="px-4 py-3.5 text-right font-mono text-ink">{money(campaign.spend, currency)}</td>
+                  <td className="px-4 py-3.5 text-right font-mono">{campaign.demos == null ? "—" : integer(campaign.demos)}</td>
+                  <td className="px-4 py-3.5 text-right font-mono">{cost == null ? "—" : money(cost, currency)}</td>
+                  <td className="px-4 py-3.5 text-right font-mono">{mille == null ? "—" : money(mille, currency)}</td>
                 </tr>
               );
             })}

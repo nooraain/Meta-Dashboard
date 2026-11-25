@@ -6,22 +6,29 @@
 }
 
 @theme {
-  --color-paper: #ffffff;
-  --color-ink: #0a0a0a;
-  --color-muted: #6b6280;
-  --color-line: #f3e8ef;
-  --color-card: #fffcfe;
-  --color-pine: #d888ad;
-  --color-pine-soft: #fef9fc;
-  --color-sea: #7c3aed;
-  --color-clay: #a78bfa;
-  --color-up: #8b5cf6;
-  --color-down: #374151;
-  --color-warn: #fef9fc;
-  --color-warn-line: #f5d0e6;
+  --color-paper: #faf7fb;
+  --color-surface: #ffffff;
+  --color-ink: #1a1523;
+  --color-muted: #6e667d;
+  --color-line: #ebe3ee;
+  --color-card: #ffffff;
+  --color-pine: #c9739a;
+  --color-pine-dark: #a85a7f;
+  --color-pine-soft: #fdf8fb;
+  --color-sea: #6d28d9;
+  --color-clay: #8b5cf6;
+  --color-up: #5b21b6;
+  --color-down: #78716c;
+  --color-warn: #fdf4f8;
+  --color-warn-line: #f0d4e3;
   --color-warn-ink: #6b21a8;
+  --shadow-card: 0 1px 2px rgb(26 21 35 / 0.04), 0 8px 24px rgb(26 21 35 / 0.06);
+  --shadow-card-hover: 0 2px 4px rgb(26 21 35 / 0.05), 0 12px 32px rgb(26 21 35 / 0.08);
 }
 
 body {
   font-family: var(--font-sans), sans-serif;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgb(201 115 154 / 0.08), transparent 50%),
+    var(--color-paper);
 }

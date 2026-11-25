@@ -78,20 +78,26 @@ function Metric({
     previous == null || previous === "—" ? null : Number(previous.replace(/[^0-9.-]/g, "")),
   );
   const improved = delta != null && better ? (better === "up" ? delta > 0 : delta < 0) : null;
-  const toneClass = tone === "pine" ? "bg-pine text-pine" : tone === "sea" ? "bg-sea text-sea" : "bg-clay text-clay";
+  const accent =
+    tone === "pine" ? "from-pine to-pine-dark" : tone === "sea" ? "from-sea to-clay" : "from-clay to-sea";
+  const labelTone = tone === "pine" ? "text-pine-dark" : tone === "sea" ? "text-sea" : "text-clay";
   return (
-    <div className="min-w-0 flex-1 rounded-md border border-line bg-card">
-      <div className={`h-1 rounded-t-md ${toneClass.split(" ")[0]}`} />
+    <div className="min-w-0 flex-1 rounded-xl border border-line/80 bg-card shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-card-hover)]">
+      <div className={`h-0.5 rounded-t-xl bg-gradient-to-r ${accent}`} />
       <div className="px-4 py-5 sm:px-5">
-      <p className={`text-xs uppercase tracking-[0.16em] ${toneClass.split(" ")[1]}`}>{label}</p>
-      <p className="mt-3 font-mono text-3xl tracking-tight text-ink">{value}</p>
-      <p className={`mt-2 text-sm ${improved == null ? "text-muted" : improved ? "text-up" : "text-down"}`}>
-        {value === "—"
-          ? "Waiting on Amplitude"
-          : delta == null
-            ? "No previous window"
-            : `${delta > 0 ? "+" : ""}${(delta * 100).toFixed(1)}% vs previous period`}
-      </p>
+        <p className={`text-[11px] font-medium uppercase tracking-[0.14em] ${labelTone}`}>{label}</p>
+        <p className="mt-3 font-mono text-2xl font-medium tracking-tight text-ink sm:text-[1.65rem]">{value}</p>
+        <p
+          className={`mt-2 text-xs leading-relaxed sm:text-sm ${
+            improved == null ? "text-muted" : improved ? "font-medium text-up" : "text-down"
+          }`}
+        >
+          {value === "—"
+            ? "Waiting on Amplitude"
+            : delta == null
+              ? "No previous window"
+              : `${delta > 0 ? "+" : ""}${(delta * 100).toFixed(1)}% vs previous period`}
+        </p>
       </div>
     </div>
   );
@@ -106,7 +112,7 @@ function RefreshForm({ label }: { label: string }) {
   return (
     <form action="/api/cron/refresh" method="post">
       <button
-        className="rounded-md border border-pine bg-pine px-4 py-2 text-sm text-white"
+        className="rounded-lg bg-gradient-to-r from-pine to-pine-dark px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-95"
         type="submit"
       >
         {label}
@@ -132,35 +138,54 @@ export function Dashboard({
   const maxSpend = Math.max(...data.days.map((day) => day.spend), 1);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8">
-      <header className="flex items-start justify-between gap-6 border-b border-line pb-6">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-pine">TaxGPT</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">META REPORTING DASHBOARD</h1>
-          <p className="mt-2 text-sm text-muted">
-            Meta account 984644083020099 · Pacific time
-            {current ? ` · refreshed ${stamp(current.refreshedAt)}` : ""}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted">{email}</p>
-          {data.status !== "unconfigured" ? (
-            <form action="/api/cron/refresh" method="post">
-              <button className="mt-2 text-sm text-pine underline decoration-pine/40 underline-offset-4" type="submit">
-                Refresh
-              </button>
-            </form>
-          ) : null}
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/sign-in" });
-            }}
-          >
-            <button className="mt-2 text-sm text-muted underline decoration-line underline-offset-4" type="submit">
-              Sign out
-            </button>
-          </form>
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8">
+      <header className="rounded-2xl border border-line/80 bg-card/90 px-5 py-6 shadow-[var(--shadow-card)] backdrop-blur-sm sm:px-7">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-pine">TaxGPT</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]">
+              Meta reporting dashboard
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Account <span className="font-mono text-xs text-ink/80">984644083020099</span>
+              <span className="mx-1.5 text-line">·</span>
+              Pacific time
+              {current ? (
+                <>
+                  <span className="mx-1.5 text-line">·</span>
+                  Refreshed {stamp(current.refreshedAt)}
+                </>
+              ) : null}
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <p className="text-sm text-muted">{email}</p>
+            <div className="flex flex-wrap items-center gap-3">
+              {data.status !== "unconfigured" ? (
+                <form action="/api/cron/refresh" method="post">
+                  <button
+                    className="rounded-lg border border-line bg-surface px-3.5 py-1.5 text-sm font-medium text-ink shadow-sm transition-colors hover:border-pine/40 hover:text-pine"
+                    type="submit"
+                  >
+                    Refresh data
+                  </button>
+                </form>
+              ) : null}
+              <form
+                action={async () => {
+                  "use server";
+                  await signOut({ redirectTo: "/sign-in" });
+                }}
+              >
+                <button
+                  className="text-sm text-muted transition-colors hover:text-ink"
+                  type="submit"
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -188,7 +213,7 @@ export function Dashboard({
       ) : null}
 
       {data.status === "ready" && data.range && current && currentFacts ? (
-        <main className="mt-8 flex flex-col gap-10">
+        <main className="mt-8 flex flex-col gap-12">
           <RangeFilters range={data.range} />
           {data.notice && current.demos != null ? <p className="text-sm text-down">{data.notice}</p> : null}
           {!data.hasTotals ? (
@@ -197,17 +222,22 @@ export function Dashboard({
           {data.hasTotals ? (
           <>
           <section>
-            <p className="text-sm text-muted">
-              {data.range.label} · {pretty(current.since)} – {pretty(current.until)}
-              {previous ? ` · compared with ${pretty(previous.since)} – ${pretty(previous.until)}` : ""}
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="rounded-full border border-line bg-card px-3 py-1 font-medium text-ink shadow-sm">
+                {data.range.label}
+              </span>
+              <span className="text-muted">
+                {pretty(current.since)} – {pretty(current.until)}
+                {previous ? ` vs ${pretty(previous.since)} – ${pretty(previous.until)}` : ""}
+              </span>
+            </div>
             {data.range.totalsFrom === "stored" && data.range.storedDays < data.range.spanDays ? (
               <p className="mt-2 text-sm text-muted">
                 Totals include {data.range.storedDays} of {data.range.spanDays} stored days, so a longer range can show the same number.
               </p>
             ) : null}
             {current.demos == null ? (
-              <p className="mt-4 rounded-md border border-warn-line bg-warn px-4 py-3 text-sm text-warn-ink">
+              <p className="mt-4 rounded-xl border border-warn-line bg-warn px-4 py-3 text-sm leading-relaxed text-warn-ink">
                 {data.notice
                   ? `${data.notice} Spend is already from Meta.`
                   : data.range.totalsFrom === "stored" && data.range.storedDays < data.range.spanDays
@@ -215,7 +245,7 @@ export function Dashboard({
                     : "Demos and CPA stay blank until Amplitude returns Meta demos booked (initial utm source facebook). Spend is already from Meta."}
               </p>
             ) : null}
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <Metric
                 label="Total Spend"
                 tone="pine"
@@ -250,7 +280,7 @@ export function Dashboard({
                 better="up"
               />
             </div>
-            <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
+            <p className="mt-5 max-w-3xl rounded-xl border border-line/60 bg-pine-soft/60 px-4 py-3 text-sm leading-relaxed text-muted">
               Total Spend is all Meta campaigns; Demo Spend excludes lead campaigns. Demos Booked match Amplitude Meta
               demos (facebook utm, cohort exclusions). CPA is demo spend divided by those demos. Lead to Demo Booked is
               the Amplitude funnel: lead email collected (Meta) then demo_booked within 30 days.
@@ -259,11 +289,12 @@ export function Dashboard({
 
           <PerformanceComparison range={data.range} current={current} previous={previous} currency={currency} />
 
-          <section>
-            <h2 className="text-lg font-semibold">Daily spend</h2>
+          <section className="rounded-2xl border border-line/80 bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
+            <h2 className="text-base font-semibold tracking-tight text-ink">Daily spend</h2>
+            <p className="mt-1 text-sm text-muted">Account spend by day for the selected window.</p>
             {data.days.length ? (
               <>
-                <div className="mt-4 overflow-x-auto rounded-md border border-line bg-pine-soft">
+                <div className="mt-5 overflow-x-auto rounded-xl border border-line/80 bg-pine-soft/80 p-2">
                   <div
                     className="flex h-60 items-end gap-0.5 px-2 pb-2 pt-1"
                     style={data.days.length > 20 ? { minWidth: `${data.days.length * 2.75}rem` } : undefined}
@@ -282,10 +313,10 @@ export function Dashboard({
                           {barMoney(day.spend, currency, data.days.length > 14)}
                         </span>
                         <div
-                          className="w-full rounded-t-sm bg-pine"
+                          className="w-full rounded-t-md bg-gradient-to-t from-pine-dark to-pine"
                           style={{
                             height: `${Math.max(6, (day.spend / maxSpend) * 72)}%`,
-                            opacity: 0.35 + 0.45 * (day.spend / maxSpend),
+                            opacity: 0.45 + 0.5 * (day.spend / maxSpend),
                           }}
                         />
                       </div>

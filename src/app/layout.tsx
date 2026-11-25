@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "META REPORTING DASHBOARD",
+  title: "Meta reporting dashboard",
   description: "Internal Meta and Amplitude ads dashboard",
   robots: { index: false, follow: false },
 };
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-paper font-sans text-ink">
+      <body className="flex min-h-full flex-col font-sans text-ink antialiased">
         {children}
       </body>
     </html>

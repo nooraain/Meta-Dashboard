@@ -28,9 +28,10 @@ export default async function SignInPage({
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
-      <p className="text-xs uppercase tracking-[0.18em] text-pine">TaxGPT</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight">META REPORTING DASHBOARD</h1>
-      <p className="mt-4 text-muted">Internal marketing numbers. Use your TaxGPT email.</p>
+      <div className="rounded-2xl border border-line/80 bg-card p-8 shadow-[var(--shadow-card)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-pine">TaxGPT</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">Meta reporting dashboard</h1>
+      <p className="mt-3 text-sm leading-relaxed text-muted">Internal marketing numbers. Use your TaxGPT email.</p>
       {failed ? (
         <p className="mt-4 text-sm text-down">That email or password is wrong.</p>
       ) : null}
@@ -55,7 +56,7 @@ export default async function SignInPage({
           <label className="flex flex-col gap-2 text-sm">
             Email
             <input
-              className="h-11 rounded-md border border-line bg-card px-3"
+              className="h-11 rounded-lg border border-line/80 bg-surface px-3 shadow-sm outline-none focus:border-sea/50 focus:ring-2 focus:ring-sea/15"
               name="email"
               type="email"
               autoComplete="username"
@@ -65,14 +66,17 @@ export default async function SignInPage({
           <label className="flex flex-col gap-2 text-sm">
             Password
             <input
-              className="h-11 rounded-md border border-line bg-card px-3"
+              className="h-11 rounded-lg border border-line/80 bg-surface px-3 shadow-sm outline-none focus:border-sea/50 focus:ring-2 focus:ring-sea/15"
               name="password"
               type="password"
               autoComplete="current-password"
               required
             />
           </label>
-          <button className="mt-2 h-11 rounded-md bg-pine px-5 text-sm text-white" type="submit">
+          <button
+            className="mt-2 h-11 rounded-lg bg-gradient-to-r from-pine to-pine-dark px-5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-95"
+            type="submit"
+          >
             Sign in
           </button>
         </form>
@@ -81,6 +85,7 @@ export default async function SignInPage({
           Add DASHBOARD_EMAIL and DASHBOARD_PASSWORD before signing in.
         </p>
       )}
+      </div>
     </main>
   );
 }
