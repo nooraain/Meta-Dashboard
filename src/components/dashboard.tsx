@@ -100,8 +100,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 function periodFacts(period: Period) {
   const cpa = ratio(period.demoSpend ?? period.spend, period.demos);
   const cpl = period.leadSpend == null ? null : ratio(period.leadSpend, period.leadForms);
-  const cpm = period.impressions ? (period.spend / period.impressions) * 1000 : null;
-  return { cpa, cpl, cpm };
+  return { cpa, cpl };
 }
 
 function RefreshForm({ label }: { label: string }) {
@@ -217,6 +216,25 @@ export function Dashboard({
                     : "Demos and CPA stay blank until Amplitude returns Meta demos booked (initial utm source facebook). Spend is already from Meta."}
               </p>
             ) : null}
+            <div className="mt-6 overflow-hidden rounded-md border border-line bg-card">
+              <div className="h-1 bg-pine" />
+              <div className="px-5 py-5">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+                  <Fact label="Total Spend" value={money(current.spend, currency)} />
+                  <Fact
+                    label="Demos Booked"
+                    value={current.demos == null ? "—" : integer(current.demos)}
+                  />
+                  <Fact label="CPA" value={currentFacts.cpa == null ? "—" : money(currentFacts.cpa, currency)} />
+                  <Fact label="No. of Leads" value={integer(current.leadForms)} />
+                  <Fact label="CPL" value={currentFacts.cpl == null ? "—" : money(currentFacts.cpl, currency)} />
+                </div>
+                <p className="mt-4 text-sm leading-6 text-muted">
+                  Total Spend is all Meta campaigns. CPA is demo-campaign spend divided by Amplitude demos booked.
+                  CPL is lead-campaign spend divided by Meta lead form results.
+                </p>
+              </div>
+            </div>
             <div className="mt-6 flex flex-col gap-4 sm:flex-row">
               <Metric
                 label="Demo spend"
@@ -243,21 +261,6 @@ export function Dashboard({
               Demos match Amplitude Meta demos booked: unique Demo Booked users whose initial utm source is facebook, excluding the random Calendly cohort and the email taxgpt. CPA divides spend on demo campaigns (not lead campaigns) by that unique total for the window, not a sum of daily uniques. Lead forms stay from Meta.
             </p>
           </section>
-
-          <section className="grid grid-cols-2 gap-4 rounded-md border border-line bg-card px-5 py-5 sm:grid-cols-3 lg:grid-cols-6">
-            <Fact label="Impressions" value={integer(current.impressions)} />
-            <Fact label="Link clicks" value={integer(current.linkClicks)} />
-            <Fact label="Reach" value={current.reach == null ? "—" : integer(current.reach)} />
-            <Fact label="Lead forms" value={integer(current.leadForms)} />
-            <Fact label="Cost per lead" value={currentFacts.cpl == null ? "—" : money(currentFacts.cpl, currency)} />
-            <Fact label="CPM" value={currentFacts.cpm == null ? "—" : money(currentFacts.cpm, currency)} />
-          </section>
-          <p className="-mt-6 text-sm text-muted">
-            {current.reach == null
-              ? "Reach stays blank on this range. It is the people reached in one Meta window, not a sum of daily reach."
-              : "Reach is the people reached in this window. It is not a sum of daily reach."}{" "}
-            Cost per lead divides spend from lead campaigns by Meta’s lead (form) results.
-          </p>
 
           <PerformanceComparison range={data.range} current={current} previous={previous} currency={currency} />
 
