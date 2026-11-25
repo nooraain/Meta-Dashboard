@@ -21,6 +21,15 @@ function shortMoney(value: number) {
   return `$${Math.round(value)}`;
 }
 
+function barMoney(value: number, currency: string, compact: boolean) {
+  if (compact) return shortMoney(value);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function pretty(ymd: string) {
   const [year, month, day] = ymd.split("-").map(Number);
   return new Intl.DateTimeFormat("en-US", {
@@ -268,44 +277,38 @@ export function Dashboard({
             <h2 className="text-lg font-semibold">Daily spend</h2>
             {data.days.length ? (
               <>
-                <div className="mt-4 flex h-52 items-end gap-1 rounded-md border border-line bg-pine-soft px-3 pb-3 pt-8">
-                  {data.days.map((day) => (
-                    <div key={day.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
-                      {data.days.length <= 16 ? (
-                        <span className="text-[10px] leading-none text-muted">{shortMoney(day.spend)}</span>
-                      ) : null}
+                <div className="mt-4 overflow-x-auto rounded-md border border-line bg-pine-soft">
+                  <div
+                    className="flex h-60 items-end gap-0.5 px-2 pb-2 pt-1"
+                    style={data.days.length > 20 ? { minWidth: `${data.days.length * 2.75}rem` } : undefined}
+                  >
+                    {data.days.map((day) => (
                       <div
-                        className="w-full rounded-t-sm bg-pine"
-                        style={{
-                          height: `${Math.max(4, (day.spend / maxSpend) * (data.days.length <= 16 ? 78 : 100))}%`,
-                          opacity: 0.35 + 0.45 * (day.spend / maxSpend),
-                        }}
-                        title={`${pretty(day.day)} ${money(day.spend, currency)}`}
-                      />
-                    </div>
-                  ))}
+                        key={day.day}
+                        className="flex h-full min-w-[2.25rem] flex-1 flex-col items-center justify-end gap-1"
+                        title={`${pretty(day.day)} · ${money(day.spend, currency)}`}
+                      >
+                        <span
+                          className={`max-w-full truncate text-center font-mono leading-none text-ink ${
+                            data.days.length > 28 ? "text-[8px]" : data.days.length > 16 ? "text-[9px]" : "text-[10px]"
+                          }`}
+                        >
+                          {barMoney(day.spend, currency, data.days.length > 14)}
+                        </span>
+                        <div
+                          className="w-full rounded-t-sm bg-pine"
+                          style={{
+                            height: `${Math.max(6, (day.spend / maxSpend) * 72)}%`,
+                            opacity: 0.35 + 0.45 * (day.spend / maxSpend),
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-muted">
                   <span>{pretty(data.days[0].day)}</span>
                   <span>{pretty(data.days[data.days.length - 1].day)}</span>
-                </div>
-                <div className="mt-4 max-h-80 overflow-y-auto rounded-md border border-line bg-card">
-                  <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 border-b border-line bg-card text-xs uppercase tracking-[0.14em] text-muted">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">Day</th>
-                        <th className="px-4 py-3 text-right font-medium">Spend</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...data.days].reverse().map((day) => (
-                        <tr key={day.day} className="border-b border-line last:border-0">
-                          <td className="px-4 py-2">{pretty(day.day)}</td>
-                          <td className="px-4 py-2 text-right font-mono text-ink">{money(day.spend, currency)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </>
             ) : (
